@@ -1,0 +1,9 @@
+# config
+config/config.yml
+
+# build
+build/
+
+# etc
+.DS_Store
+.vscode

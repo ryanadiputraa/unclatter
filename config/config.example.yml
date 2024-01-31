@@ -1,0 +1,10 @@
+server:
+    port: :8080
+
+postgres:
+    host: host
+    port: 5432
+    user: user
+    password: password
+    db_name: dbname
+    ssl_mode: disable
