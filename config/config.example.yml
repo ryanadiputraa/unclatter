@@ -1,10 +1,16 @@
 server:
-    port: :8080
+  port: :8080
 
 postgres:
-    host: host
-    port: 5432
-    user: user
-    password: password
-    db_name: dbname
-    ssl_mode: disable
+  host: host
+  port: 5432
+  user: user
+  password: password
+  db_name: dbname
+  ssl_mode: disable
+
+google_oauth:
+  redirect_url: http://localhost:8080/auth/signin/google/callback
+  client_id: client_id
+  client_secret: client_secret
+  state: state

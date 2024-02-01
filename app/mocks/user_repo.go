@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	user "github.com/ryanadiputraa/unclatter/app/user"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -12,17 +14,17 @@ type UserRepository struct {
 	mock.Mock
 }
 
-// Save provides a mock function with given fields: arg
-func (_m *UserRepository) Save(arg user.User) error {
-	ret := _m.Called(arg)
+// Save provides a mock function with given fields: c, arg
+func (_m *UserRepository) Save(c context.Context, arg user.User) error {
+	ret := _m.Called(c, arg)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Save")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(user.User) error); ok {
-		r0 = rf(arg)
+	if rf, ok := ret.Get(0).(func(context.Context, user.User) error); ok {
+		r0 = rf(c, arg)
 	} else {
 		r0 = ret.Error(0)
 	}
