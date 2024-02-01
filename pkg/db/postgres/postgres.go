@@ -7,6 +7,7 @@ import (
 
 	_ "github.com/lib/pq"
 
+	"github.com/ryanadiputraa/unclatter/app/user"
 	"github.com/ryanadiputraa/unclatter/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -47,6 +48,8 @@ func NewDB(c *config.Config) (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	gormDB.AutoMigrate(&user.User{})
 
 	return gormDB, err
 }

@@ -1,8 +1,8 @@
 package main
 
 import (
+	"github.com/ryanadiputraa/unclatter/app/server"
 	"github.com/ryanadiputraa/unclatter/config"
-	"github.com/ryanadiputraa/unclatter/internal/server"
 	"github.com/ryanadiputraa/unclatter/pkg/db/postgres"
 	"github.com/ryanadiputraa/unclatter/pkg/logger"
 )
