@@ -5,6 +5,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/ryanadiputraa/unclatter/app/user"
+	"github.com/ryanadiputraa/unclatter/app/validation"
 	"github.com/ryanadiputraa/unclatter/test"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
@@ -24,13 +25,13 @@ func TestSave(t *testing.T) {
 	assert.Nil(t, err)
 
 	cases := []struct {
-		name              string
-		mockRepoBehaviour func(mock sqlmock.Sqlmock)
-		err               error
+		name          string
+		mockBehaviour func(mock sqlmock.Sqlmock)
+		err           error
 	}{
 		{
 			name: "should insert new user",
-			mockRepoBehaviour: func(mock sqlmock.Sqlmock) {
+			mockBehaviour: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.ExpectExec("INSERT INTO \"users\"").
 					WithArgs(user.ID, user.Email, user.FirstName, user.LastName, user.CreatedAt).
@@ -41,20 +42,20 @@ func TestSave(t *testing.T) {
 		},
 		{
 			name: "should fail to insert user and return error",
-			mockRepoBehaviour: func(mock sqlmock.Sqlmock) {
+			mockBehaviour: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.ExpectExec("INSERT INTO \"users\"").
 					WithArgs(user.ID, user.Email, user.FirstName, user.LastName, user.CreatedAt).
 					WillReturnError(gorm.ErrDuplicatedKey)
 				mock.ExpectRollback()
 			},
-			err: gorm.ErrDuplicatedKey,
+			err: validation.NewError(validation.BadRequest, "email already registered"),
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			c.mockRepoBehaviour(mock)
+			c.mockBehaviour(mock)
 			err := r.Save(*user)
 			assert.Equal(t, c.err, err)
 		})

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"github.com/ryanadiputraa/unclatter/app/user"
+	"github.com/ryanadiputraa/unclatter/app/validation"
 	"gorm.io/gorm"
 )
 
@@ -16,5 +17,12 @@ func NewRepository(db *gorm.DB) user.UserRepository {
 }
 
 func (r *repository) Save(arg user.User) error {
-	return r.db.Create(arg).Error
+	err := r.db.Create(arg).Error
+	if err != nil {
+		if err == gorm.ErrDuplicatedKey {
+			serviceErr := validation.NewError(validation.BadRequest, "email already registered")
+			return serviceErr
+		}
+	}
+	return nil
 }
