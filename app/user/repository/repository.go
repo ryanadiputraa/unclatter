@@ -23,6 +23,7 @@ func (r *repository) Save(arg user.User) error {
 			serviceErr := validation.NewError(validation.BadRequest, "email already registered")
 			return serviceErr
 		}
+		return err
 	}
 	return nil
 }

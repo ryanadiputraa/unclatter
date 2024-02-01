@@ -16,6 +16,7 @@ func TestSave(t *testing.T) {
 	defer db.Close()
 
 	r := NewRepository(gormDB)
+	expectedInsertQuery := "INSERT INTO \"users\""
 
 	user, err := user.NewUser(user.CreateUserArg{
 		Email:     "testuser@mail.com",
@@ -33,7 +34,7 @@ func TestSave(t *testing.T) {
 			name: "should insert new user",
 			mockBehaviour: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
-				mock.ExpectExec("INSERT INTO \"users\"").
+				mock.ExpectExec(expectedInsertQuery).
 					WithArgs(user.ID, user.Email, user.FirstName, user.LastName, user.CreatedAt).
 					WillReturnResult(sqlmock.NewResult(1, 1))
 				mock.ExpectCommit()
@@ -41,15 +42,26 @@ func TestSave(t *testing.T) {
 			err: nil,
 		},
 		{
-			name: "should fail to insert user and return error",
+			name: "should fail to insert user and return error when email already registered",
 			mockBehaviour: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
-				mock.ExpectExec("INSERT INTO \"users\"").
+				mock.ExpectExec(expectedInsertQuery).
 					WithArgs(user.ID, user.Email, user.FirstName, user.LastName, user.CreatedAt).
 					WillReturnError(gorm.ErrDuplicatedKey)
 				mock.ExpectRollback()
 			},
 			err: validation.NewError(validation.BadRequest, "email already registered"),
+		},
+		{
+			name: "should fail to insert user and return error",
+			mockBehaviour: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec(expectedInsertQuery).
+					WithArgs(user.ID, user.Email, user.FirstName, user.LastName, user.CreatedAt).
+					WillReturnError(gorm.ErrInvalidDB)
+				mock.ExpectRollback()
+			},
+			err: gorm.ErrInvalidDB,
 		},
 	}
 
