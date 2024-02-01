@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -37,9 +38,9 @@ func NewUser(arg CreateUserArg) (*User, error) {
 }
 
 type UserService interface {
-	CreateUser(arg CreateUserArg) (*User, error)
+	CreateUser(ctx context.Context, arg CreateUserArg) (*User, error)
 }
 
 type UserRepository interface {
-	Save(arg User) error
+	Save(c context.Context, arg User) error
 }

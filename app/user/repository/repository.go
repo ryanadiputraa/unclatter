@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/ryanadiputraa/unclatter/app/user"
 	"github.com/ryanadiputraa/unclatter/app/validation"
 	"gorm.io/gorm"
@@ -16,7 +18,7 @@ func NewRepository(db *gorm.DB) user.UserRepository {
 	}
 }
 
-func (r *repository) Save(arg user.User) error {
+func (r *repository) Save(ctx context.Context, arg user.User) error {
 	err := r.db.Create(arg).Error
 	if err != nil {
 		if err == gorm.ErrDuplicatedKey {

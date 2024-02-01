@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -68,7 +69,7 @@ func TestSave(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			c.mockBehaviour(mock)
-			err := r.Save(*user)
+			err := r.Save(context.Background(), *user)
 			assert.Equal(t, c.err, err)
 		})
 	}

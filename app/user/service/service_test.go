@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -78,7 +79,7 @@ func TestCreateUser(t *testing.T) {
 			c.mockRepoBehaviour(r)
 
 			s := NewService(logger.NewLogger(), r)
-			user, err := s.CreateUser(c.arg)
+			user, err := s.CreateUser(context.Background(), c.arg)
 
 			assert.Equal(t, c.err, err)
 			if err != nil {
