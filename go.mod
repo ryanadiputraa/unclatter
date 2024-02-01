@@ -3,6 +3,7 @@ module github.com/ryanadiputraa/unclatter
 go 1.21.4
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
 	gorm.io/driver/postgres v1.5.4

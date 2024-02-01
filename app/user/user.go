@@ -39,3 +39,7 @@ func NewUser(arg CreateUserArg) (*User, error) {
 type UserService interface {
 	CreateUser(arg CreateUserArg) (*User, error)
 }
+
+type UserRepository interface {
+	Save(arg User) error
+}
