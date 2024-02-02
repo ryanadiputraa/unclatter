@@ -16,7 +16,7 @@ type User struct {
 	FirstName    string              `json:"first_name" gorm:"type:varchar;not null"`
 	LastName     string              `json:"last_name" gorm:"type:varchar;not null"`
 	AuthProvider []auth.AuthProvider `json:"-"`
-	CreatedAt    time.Time           `json:"-" gorm:"type:varchar;not null"`
+	CreatedAt    time.Time           `json:"-" gorm:"not null"`
 }
 
 type NewUserArg struct {
@@ -44,5 +44,5 @@ type UserService interface {
 }
 
 type UserRepository interface {
-	SaveOrUpdate(c context.Context, arg User) error
+	SaveOrUpdate(c context.Context, user User) error
 }

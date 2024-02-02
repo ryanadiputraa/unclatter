@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/ryanadiputraa/unclatter/app/user"
 	"github.com/ryanadiputraa/unclatter/pkg/logger"
@@ -23,14 +22,14 @@ func NewService(log logger.Logger, repository user.UserRepository) user.UserServ
 func (s *service) CreateUser(ctx context.Context, arg user.NewUserArg) (*user.User, error) {
 	user, err := user.NewUser(arg)
 	if err != nil {
+		s.log.Warn("user service: fail to create new user", err.Error())
 		return nil, err
 	}
 
 	if err := s.repository.SaveOrUpdate(ctx, *user); err != nil {
-		s.log.Info(fmt.Sprintf("user service: fail to save user \"%v\"", err.Error()))
+		s.log.Error("user service: fail to save user", err.Error())
 		return nil, err
 	}
 
-	s.log.Info(fmt.Sprintf("user service: register new user \"%v\"", user.ID))
 	return user, nil
 }

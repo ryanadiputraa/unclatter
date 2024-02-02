@@ -7,6 +7,7 @@ import (
 
 	_ "github.com/lib/pq"
 
+	"github.com/ryanadiputraa/unclatter/app/auth"
 	"github.com/ryanadiputraa/unclatter/app/user"
 	"github.com/ryanadiputraa/unclatter/config"
 	"gorm.io/driver/postgres"
@@ -49,7 +50,7 @@ func NewDB(c *config.Config) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	gormDB.AutoMigrate(&user.User{})
+	gormDB.AutoMigrate(&user.User{}, &auth.AuthProvider{})
 
 	return gormDB, err
 }

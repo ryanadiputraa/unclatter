@@ -20,8 +20,8 @@ const (
 type User struct {
 	ID        string `json:"id"`
 	Email     string `json:"email"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	FirstName string `json:"given_name"`
+	LastName  string `json:"family_name"`
 	Picture   string `json:"picture"`
 	Locale    string `json:"locale"`
 }

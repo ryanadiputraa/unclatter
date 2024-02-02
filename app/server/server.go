@@ -51,7 +51,7 @@ func (s *Server) ServeHTTP() error {
 	signal.Notify(quit, os.Kill)
 
 	sig := <-quit
-	s.log.Info("received terminate, graceful shutdown ", sig)
+	s.log.Info("received terminate, graceful shutdown", sig)
 
 	tc, shutdown := context.WithTimeout(context.Background(), 30*time.Second)
 	defer shutdown()

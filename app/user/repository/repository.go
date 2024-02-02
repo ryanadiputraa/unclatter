@@ -18,11 +18,11 @@ func NewRepository(db *gorm.DB) user.UserRepository {
 	}
 }
 
-func (r *repository) SaveOrUpdate(ctx context.Context, arg user.User) error {
+func (r *repository) SaveOrUpdate(ctx context.Context, user user.User) error {
 	return r.db.Clauses(clause.OnConflict{
 		Columns: []clause.Column{{Name: "email"}},
 		DoUpdates: clause.AssignmentColumns([]string{
 			"first_name", "last_name",
 		}),
-	}).Create(&arg).Error
+	}).Create(&user).Error
 }

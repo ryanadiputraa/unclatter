@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/ryanadiputraa/unclatter/app/auth"
 	"github.com/ryanadiputraa/unclatter/app/user"
 	"github.com/ryanadiputraa/unclatter/app/validation"
 	"github.com/ryanadiputraa/unclatter/config"
@@ -15,14 +16,16 @@ import (
 type handler struct {
 	config      *config.Config
 	log         logger.Logger
+	authService auth.AuthService
 	userService user.UserService
 	googleOauth oauth.GoogleOauth
 }
 
-func NewHandler(r *echo.Group, config *config.Config, log logger.Logger, userService user.UserService, googleOauth oauth.GoogleOauth) {
+func NewHandler(r *echo.Group, config *config.Config, log logger.Logger, authService auth.AuthService, userService user.UserService, googleOauth oauth.GoogleOauth) {
 	h := &handler{
 		config:      config,
 		log:         log,
+		authService: authService,
 		userService: userService,
 		googleOauth: googleOauth,
 	}
@@ -50,21 +53,27 @@ func (h *handler) GoogleCallback() echo.HandlerFunc {
 
 		userInfo, err := h.googleOauth.ExchangeCodeWithUserInfo(c.Request().Context(), code)
 		if err != nil {
-			h.log.Error("auth handler: fail to exchange; " + err.Error())
+			h.log.Error("auth handler: fail to exchange", err.Error())
 			return h.redirectWithError(validation.ExchangeCodeFailed)(c)
 		}
 
-		_, err = h.userService.CreateUser(c.Request().Context(), user.NewUserArg{
+		user, err := h.userService.CreateUser(c.Request().Context(), user.NewUserArg{
 			Email:     userInfo.Email,
 			FirstName: userInfo.FirstName,
 			LastName:  userInfo.LastName,
 		})
 		if err != nil {
-			h.log.Error("auth handler: fail to register user; " + err.Error())
 			return h.redirectWithError(validation.ServerErr)(c)
 		}
 
-		// TODO: save auth provider
+		_, err = h.authService.AddUserAuthProvider(c.Request().Context(), auth.NewAuthProviderArg{
+			Provider:       "google",
+			ProviderUserID: userInfo.ID,
+			UserID:         user.ID,
+		})
+		if err != nil {
+			return h.redirectWithError(validation.ServerErr)(c)
+		}
 
 		// TODO: redirect with jwt tokens
 
