@@ -5,13 +5,13 @@ UnClatter is an article bookmarking tool that also removes distractions like ads
 
 ## Development 🧑🏻‍💻
 
-Run your `local db server` and adjust your `config/config.yml` for development server
+Adjust your `config/config.yml` for development server
 
 ```bash
 make env
 ```
 
-start server
+Start server
 
 ```bash
 make server
