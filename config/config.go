@@ -11,7 +11,8 @@ type Config struct {
 }
 
 type Server struct {
-	Port string `mapstructure:"port"`
+	Port        string `mapstructure:"port"`
+	FrontendURL string `mapstructure:"fe_url"`
 }
 
 type Postgres struct {

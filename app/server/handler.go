@@ -15,5 +15,5 @@ func (s *Server) setupHandlers() {
 
 	googleOauth := oauth.NewGoogleOauth(s.config.GoogleOauth)
 
-	authHandler.NewHandler(auth, userService, googleOauth)
+	authHandler.NewHandler(auth, s.config, s.log, userService, googleOauth)
 }

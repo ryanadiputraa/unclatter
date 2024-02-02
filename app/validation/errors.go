@@ -12,6 +12,10 @@ const (
 	NotFound     = "not_found"
 	ServerErr    = "server_err"
 	Timeout      = "bad_gateway"
+
+	// Oauth errror
+	InvalidCallbackParam = "invalid_callback_param"
+	ExchangeCodeFailed   = "exchange_code_failed"
 )
 
 type Error struct {

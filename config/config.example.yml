@@ -1,5 +1,6 @@
 server:
   port: :8080
+  fe_url: http://localhost:3000
 
 postgres:
   host: host
