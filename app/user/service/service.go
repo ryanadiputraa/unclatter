@@ -26,7 +26,7 @@ func (s *service) CreateUser(ctx context.Context, arg user.CreateUserArg) (*user
 		return nil, err
 	}
 
-	if err := s.repository.Save(ctx, *user); err != nil {
+	if err := s.repository.SaveOrUpdate(ctx, *user); err != nil {
 		s.log.Info(fmt.Sprintf("user service: fail to save user \"%v\"", err.Error()))
 		return nil, err
 	}

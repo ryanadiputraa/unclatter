@@ -14,12 +14,12 @@ type UserRepository struct {
 	mock.Mock
 }
 
-// Save provides a mock function with given fields: c, arg
-func (_m *UserRepository) Save(c context.Context, arg user.User) error {
+// SaveOrUpdate provides a mock function with given fields: c, arg
+func (_m *UserRepository) SaveOrUpdate(c context.Context, arg user.User) error {
 	ret := _m.Called(c, arg)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Save")
+		panic("no return value specified for SaveOrUpdate")
 	}
 
 	var r0 error

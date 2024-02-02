@@ -48,14 +48,23 @@ func (h *handler) GoogleCallback() echo.HandlerFunc {
 			return h.redirectWithError(validation.InvalidCallbackParam)(c)
 		}
 
-		user, err := h.googleOauth.ExchangeCodeWithUserInfo(c.Request().Context(), code)
+		userInfo, err := h.googleOauth.ExchangeCodeWithUserInfo(c.Request().Context(), code)
 		if err != nil {
 			h.log.Error("auth handler: fail to exchange; " + err.Error())
 			return h.redirectWithError(validation.ExchangeCodeFailed)(c)
 		}
 
-		// TODO: save or update user
-		fmt.Print(user)
+		_, err = h.userService.CreateUser(c.Request().Context(), user.CreateUserArg{
+			Email:     userInfo.Email,
+			FirstName: userInfo.FirstName,
+			LastName:  userInfo.LastName,
+		})
+		if err != nil {
+			h.log.Error("auth handler: fail to register user; " + err.Error())
+			return h.redirectWithError(validation.ServerErr)(c)
+		}
+
+		// TODO: save auth provider
 
 		// TODO: redirect with jwt tokens
 

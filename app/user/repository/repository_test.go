@@ -6,7 +6,6 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/ryanadiputraa/unclatter/app/user"
-	"github.com/ryanadiputraa/unclatter/app/validation"
 	"github.com/ryanadiputraa/unclatter/test"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
@@ -43,17 +42,6 @@ func TestSave(t *testing.T) {
 			err: nil,
 		},
 		{
-			name: "should fail to insert user and return error when email already registered",
-			mockBehaviour: func(mock sqlmock.Sqlmock) {
-				mock.ExpectBegin()
-				mock.ExpectExec(expectedInsertQuery).
-					WithArgs(user.ID, user.Email, user.FirstName, user.LastName, user.CreatedAt).
-					WillReturnError(gorm.ErrDuplicatedKey)
-				mock.ExpectRollback()
-			},
-			err: validation.NewError(validation.BadRequest, "email already registered"),
-		},
-		{
 			name: "should fail to insert user and return error",
 			mockBehaviour: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
@@ -69,7 +57,7 @@ func TestSave(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			c.mockBehaviour(mock)
-			err := r.Save(context.Background(), *user)
+			err := r.SaveOrUpdate(context.Background(), *user)
 			assert.Equal(t, c.err, err)
 		})
 	}

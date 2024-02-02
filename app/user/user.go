@@ -42,5 +42,5 @@ type UserService interface {
 }
 
 type UserRepository interface {
-	Save(c context.Context, arg User) error
+	SaveOrUpdate(c context.Context, arg User) error
 }

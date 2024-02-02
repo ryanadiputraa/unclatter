@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/ryanadiputraa/unclatter/app/user"
-	"github.com/ryanadiputraa/unclatter/app/validation"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type repository struct {
@@ -18,14 +18,11 @@ func NewRepository(db *gorm.DB) user.UserRepository {
 	}
 }
 
-func (r *repository) Save(ctx context.Context, arg user.User) error {
-	err := r.db.Create(arg).Error
-	if err != nil {
-		if err == gorm.ErrDuplicatedKey {
-			serviceErr := validation.NewError(validation.BadRequest, "email already registered")
-			return serviceErr
-		}
-		return err
-	}
-	return nil
+func (r *repository) SaveOrUpdate(ctx context.Context, arg user.User) error {
+	return r.db.Clauses(clause.OnConflict{
+		Columns: []clause.Column{{Name: "email"}},
+		DoUpdates: clause.AssignmentColumns([]string{
+			"first_name", "last_name",
+		}),
+	}).Create(&arg).Error
 }

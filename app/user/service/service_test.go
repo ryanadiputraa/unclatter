@@ -42,7 +42,7 @@ func TestCreateUser(t *testing.T) {
 			},
 			err: nil,
 			mockRepoBehaviour: func(mockRepo *mocks.UserRepository) {
-				mockRepo.On("Save", mock.Anything).Return(nil)
+				mockRepo.On("SaveOrUpdate", context.Background(), mock.Anything).Return(nil)
 			},
 		},
 		{
@@ -68,7 +68,7 @@ func TestCreateUser(t *testing.T) {
 			expected: nil,
 			err:      validation.NewError(validation.BadRequest, "email already registered"),
 			mockRepoBehaviour: func(mockRepo *mocks.UserRepository) {
-				mockRepo.On("Save", mock.Anything).Return(validation.NewError(validation.BadRequest, "email already registered"))
+				mockRepo.On("SaveOrUpdate", context.Background(), mock.Anything).Return(validation.NewError(validation.BadRequest, "email already registered"))
 			},
 		},
 	}
