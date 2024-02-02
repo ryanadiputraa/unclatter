@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/labstack/echo/v4"
 	"github.com/ryanadiputraa/unclatter/config"
 	"github.com/ryanadiputraa/unclatter/pkg/logger"
 	"gorm.io/gorm"
@@ -15,7 +16,7 @@ import (
 type Server struct {
 	config *config.Config
 	log    logger.Logger
-	web    *http.ServeMux
+	web    *echo.Echo
 	db     *gorm.DB
 }
 
@@ -23,7 +24,7 @@ func NewHTTPServer(config *config.Config, log logger.Logger, db *gorm.DB) *Serve
 	return &Server{
 		config: config,
 		log:    log,
-		web:    http.NewServeMux(),
+		web:    echo.New(),
 		db:     db,
 	}
 }
@@ -50,7 +51,7 @@ func (s *Server) ServeHTTP() error {
 	signal.Notify(quit, os.Kill)
 
 	sig := <-quit
-	s.log.Info("received terminate, graceful shutdown ", sig)
+	s.log.Info("received terminate, graceful shutdown", sig)
 
 	tc, shutdown := context.WithTimeout(context.Background(), 30*time.Second)
 	defer shutdown()

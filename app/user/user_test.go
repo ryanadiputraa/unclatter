@@ -1,4 +1,4 @@
-package domain
+package user
 
 import (
 	"errors"
@@ -13,25 +13,17 @@ func TestNewUser(t *testing.T) {
 	uuid := uuid.NewString()
 
 	cases := []struct {
-		name string
-		arg  struct {
-			email     string
-			firstName string
-			lastName  string
-		}
+		name     string
+		arg      NewUserArg
 		expected *User
 		error
 	}{
 		{
 			name: "should return a valid user",
-			arg: struct {
-				email     string
-				firstName string
-				lastName  string
-			}{
-				email:     "test@mail.com",
-				firstName: "Test",
-				lastName:  "Lastname",
+			arg: NewUserArg{
+				Email:     "test@mail.com",
+				FirstName: "Test",
+				LastName:  "Lastname",
 			},
 			expected: &User{
 				ID:        uuid,
@@ -44,14 +36,10 @@ func TestNewUser(t *testing.T) {
 		},
 		{
 			name: "should return error when given invalid email address",
-			arg: struct {
-				email     string
-				firstName string
-				lastName  string
-			}{
-				email:     "invalidemailaddress",
-				firstName: "Test",
-				lastName:  "Lastname",
+			arg: NewUserArg{
+				Email:     "invalidemailaddress",
+				FirstName: "Test",
+				LastName:  "Lastname",
 			},
 			expected: nil,
 			error:    errors.New("invalid email address"),
@@ -60,7 +48,7 @@ func TestNewUser(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			user, err := NewUser(c.arg.email, c.arg.firstName, c.arg.lastName)
+			user, err := NewUser(c.arg)
 			assert.Equal(t, c.error, err)
 			if err != nil {
 				return
