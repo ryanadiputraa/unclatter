@@ -21,14 +21,14 @@ const (
 func TestCreateUser(t *testing.T) {
 	cases := []struct {
 		name              string
-		arg               user.CreateUserArg
+		arg               user.NewUserArg
 		expected          *user.User
 		err               error
 		mockRepoBehaviour func(mockRepo *mocks.UserRepository)
 	}{
 		{
 			name: "should return created user",
-			arg: user.CreateUserArg{
+			arg: user.NewUserArg{
 				Email:     dummyEmail,
 				FirstName: "test",
 				LastName:  "lastname",
@@ -47,7 +47,7 @@ func TestCreateUser(t *testing.T) {
 		},
 		{
 			name: "should fail to create user when given invalid email address",
-			arg: user.CreateUserArg{
+			arg: user.NewUserArg{
 				Email:     "testusermailcom",
 				FirstName: "test",
 				LastName:  "lastname",
@@ -60,7 +60,7 @@ func TestCreateUser(t *testing.T) {
 		},
 		{
 			name: "should fail to create user when error duplicate email from repository",
-			arg: user.CreateUserArg{
+			arg: user.NewUserArg{
 				Email:     dummyEmail,
 				FirstName: "test",
 				LastName:  "lastname",

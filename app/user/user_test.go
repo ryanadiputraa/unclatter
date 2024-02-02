@@ -14,13 +14,13 @@ func TestNewUser(t *testing.T) {
 
 	cases := []struct {
 		name     string
-		arg      CreateUserArg
+		arg      NewUserArg
 		expected *User
 		error
 	}{
 		{
 			name: "should return a valid user",
-			arg: CreateUserArg{
+			arg: NewUserArg{
 				Email:     "test@mail.com",
 				FirstName: "Test",
 				LastName:  "Lastname",
@@ -36,7 +36,7 @@ func TestNewUser(t *testing.T) {
 		},
 		{
 			name: "should return error when given invalid email address",
-			arg: CreateUserArg{
+			arg: NewUserArg{
 				Email:     "invalidemailaddress",
 				FirstName: "Test",
 				LastName:  "Lastname",

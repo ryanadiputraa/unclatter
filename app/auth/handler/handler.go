@@ -54,7 +54,7 @@ func (h *handler) GoogleCallback() echo.HandlerFunc {
 			return h.redirectWithError(validation.ExchangeCodeFailed)(c)
 		}
 
-		_, err = h.userService.CreateUser(c.Request().Context(), user.CreateUserArg{
+		_, err = h.userService.CreateUser(c.Request().Context(), user.NewUserArg{
 			Email:     userInfo.Email,
 			FirstName: userInfo.FirstName,
 			LastName:  userInfo.LastName,

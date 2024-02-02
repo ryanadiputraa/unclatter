@@ -20,7 +20,7 @@ func NewService(log logger.Logger, repository user.UserRepository) user.UserServ
 	}
 }
 
-func (s *service) CreateUser(ctx context.Context, arg user.CreateUserArg) (*user.User, error) {
+func (s *service) CreateUser(ctx context.Context, arg user.NewUserArg) (*user.User, error) {
 	user, err := user.NewUser(arg)
 	if err != nil {
 		return nil, err

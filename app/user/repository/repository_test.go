@@ -18,7 +18,7 @@ func TestSave(t *testing.T) {
 	r := NewRepository(gormDB)
 	expectedInsertQuery := "INSERT INTO \"users\""
 
-	user, err := user.NewUser(user.CreateUserArg{
+	user, err := user.NewUser(user.NewUserArg{
 		Email:     "testuser@mail.com",
 		FirstName: "test",
 		LastName:  "user",
