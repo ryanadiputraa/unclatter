@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 
 	"github.com/ryanadiputraa/unclatter/app/validation"
 	"github.com/ryanadiputraa/unclatter/config"
@@ -55,13 +54,14 @@ func (g *googleOauth) GetSignInURL() string {
 	return g.oauth2Config.AuthCodeURL(g.config.State, oauth2.SetAuthURLParam("prompt", "select_account"))
 }
 
-func (g *googleOauth) ExchangeCodeWithUserInfo(ctx context.Context, code string) (*User, error) {
-	token, err := g.oauth2Config.Exchange(ctx, code)
+func (g *googleOauth) ExchangeCodeWithUserInfo(ctx context.Context, state string) (*User, error) {
+	token, err := g.oauth2Config.Exchange(ctx, state)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := http.Get(fmt.Sprintf("%v/oauth2/v2/userinfo?access_token=%v", googleAPIURL, token.AccessToken))
+	client := g.oauth2Config.Client(context.Background(), token)
+	resp, err := client.Get(googleAPIURL + "/oauth2/v2/userinfo")
 	if err != nil {
 		return nil, err
 	}
