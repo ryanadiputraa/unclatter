@@ -10,6 +10,9 @@ postgres:
   db_name: dbname
   ssl_mode: disable
 
+jwt:
+  secret: secret
+
 google_oauth:
   redirect_url: http://localhost:8080/auth/signin/google/callback
   client_id: client_id

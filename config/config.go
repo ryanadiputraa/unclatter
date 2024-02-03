@@ -8,6 +8,7 @@ type Config struct {
 	*Server      `mapstructure:"server"`
 	*Postgres    `mapstructure:"postgres"`
 	*GoogleOauth `mapstructure:"google_oauth"`
+	*JWT         `mapstructure:"jwt"`
 }
 
 type Server struct {
@@ -22,6 +23,10 @@ type Postgres struct {
 	Password string `mapstructure:"password"`
 	DBName   string `mapstructure:"db_name"`
 	SSLMode  string `mapstructure:"ssl_mode"`
+}
+
+type JWT struct {
+	Secret string `mapstructure:"secret"`
 }
 
 type GoogleOauth struct {
