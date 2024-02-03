@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -20,6 +21,7 @@ type Claims struct {
 
 type JWTTokens interface {
 	GenereateJWTWithClaims(userID string) (*JWT, error)
+	ParseJWTClaims(accessToken string) (*Claims, error)
 }
 
 type jwtTokens struct {
@@ -45,4 +47,23 @@ func (j *jwtTokens) GenereateJWTWithClaims(userID string) (*JWT, error) {
 	}
 
 	return &JWT{AccessToken: accessToken}, nil
+}
+
+func (j *jwtTokens) ParseJWTClaims(accessToken string) (*Claims, error) {
+	token, err := jwt.Parse(accessToken, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signin method: %v", t.Header["alg"])
+		}
+		return []byte(j.config.Secret), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	claims, ok := token.Claims.(*Claims)
+	if !ok || !token.Valid {
+		return nil, err
+	}
+
+	return claims, nil
 }
