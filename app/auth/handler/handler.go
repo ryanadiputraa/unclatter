@@ -9,6 +9,7 @@ import (
 	"github.com/ryanadiputraa/unclatter/app/user"
 	"github.com/ryanadiputraa/unclatter/app/validation"
 	"github.com/ryanadiputraa/unclatter/config"
+	"github.com/ryanadiputraa/unclatter/pkg/jwt"
 	"github.com/ryanadiputraa/unclatter/pkg/logger"
 	"github.com/ryanadiputraa/unclatter/pkg/oauth"
 )
@@ -19,15 +20,25 @@ type handler struct {
 	authService auth.AuthService
 	userService user.UserService
 	googleOauth oauth.GoogleOauth
+	jwtTokens   jwt.JWTTokens
 }
 
-func NewHandler(r *echo.Group, config *config.Config, log logger.Logger, authService auth.AuthService, userService user.UserService, googleOauth oauth.GoogleOauth) {
+func NewHandler(
+	r *echo.Group,
+	config *config.Config,
+	log logger.Logger,
+	authService auth.AuthService,
+	userService user.UserService,
+	googleOauth oauth.GoogleOauth,
+	jwtTokens jwt.JWTTokens,
+) {
 	h := &handler{
 		config:      config,
 		log:         log,
 		authService: authService,
 		userService: userService,
 		googleOauth: googleOauth,
+		jwtTokens:   jwtTokens,
 	}
 
 	r.GET("/signin/google", h.GoogleSignIn())
@@ -75,9 +86,13 @@ func (h *handler) GoogleCallback() echo.HandlerFunc {
 			return h.redirectWithError(validation.ServerErr)(c)
 		}
 
-		// TODO: redirect with jwt tokens
+		jwtTokens, err := h.jwtTokens.GenereateJWTWithClaims(user.ID)
+		if err != nil {
+			h.log.Error("auth handler: fail to generate jwt tokens", err.Error())
+			return h.redirectWithError(validation.ServerErr)(c)
+		}
 
-		return c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("%v/auth/token=<token>", h.config.FrontendURL))
+		return c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("%v/auth?access_token=%v", h.config.FrontendURL, jwtTokens.AccessToken))
 	}
 }
 
