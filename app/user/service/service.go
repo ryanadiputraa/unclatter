@@ -19,17 +19,25 @@ func NewService(log logger.Logger, repository user.UserRepository) user.UserServ
 	}
 }
 
-func (s *service) CreateUser(ctx context.Context, arg user.NewUserArg) (*user.User, error) {
-	user, err := user.NewUser(arg)
+func (s *service) CreateUser(ctx context.Context, arg user.NewUserArg) (created *user.User, err error) {
+	created, err = user.NewUser(arg)
 	if err != nil {
 		s.log.Warn("user service: fail to create new user", err.Error())
-		return nil, err
+		return
 	}
 
-	if err := s.repository.SaveOrUpdate(ctx, *user); err != nil {
+	if err = s.repository.SaveOrUpdate(ctx, *created); err != nil {
 		s.log.Error("user service: fail to save user", err.Error())
-		return nil, err
+		return
 	}
+	return
+}
 
-	return user, nil
+func (s *service) GetUserInfo(ctx context.Context, userID string) (user *user.User, err error) {
+	user, err = s.repository.FindByID(ctx, userID)
+	if err != nil {
+		s.log.Warn("user service: fail to get user by id", err.Error())
+		return
+	}
+	return
 }

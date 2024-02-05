@@ -68,7 +68,8 @@ func TestCreateUser(t *testing.T) {
 			expected: nil,
 			err:      validation.NewError(validation.BadRequest, "email already registered"),
 			mockRepoBehaviour: func(mockRepo *mocks.UserRepository) {
-				mockRepo.On("SaveOrUpdate", context.Background(), mock.Anything).Return(validation.NewError(validation.BadRequest, "email already registered"))
+				mockRepo.On("SaveOrUpdate", context.Background(), mock.Anything).
+					Return(validation.NewError(validation.BadRequest, "email already registered"))
 			},
 		},
 	}
@@ -83,6 +84,65 @@ func TestCreateUser(t *testing.T) {
 
 			assert.Equal(t, c.err, err)
 			if err != nil {
+				return
+			}
+
+			assert.NotNil(t, user.ID)
+			assert.Equal(t, c.expected.Email, user.Email)
+			assert.Equal(t, c.expected.FirstName, user.FirstName)
+			assert.Equal(t, c.expected.LastName, user.LastName)
+			assert.NotNil(t, user.CreatedAt)
+		})
+	}
+}
+
+func TestGetUserInfo(t *testing.T) {
+	testUser, err := user.NewUser(user.NewUserArg{
+		Email:     "test@mail.com",
+		FirstName: "test",
+		LastName:  "lastname",
+	})
+	assert.NoError(t, err)
+
+	cases := []struct {
+		name              string
+		arg               string
+		expected          *user.User
+		err               error
+		mockRepoBehaviour func(mockRepo *mocks.UserRepository)
+	}{
+		{
+			name:     "should return user info with given id",
+			arg:      testUser.ID,
+			expected: testUser,
+			err:      nil,
+			mockRepoBehaviour: func(mockRepo *mocks.UserRepository) {
+				mockRepo.On("FindByID", context.Background(), mock.Anything).Return(testUser, nil)
+			},
+		},
+		{
+			name:     "should return error when user not found",
+			arg:      testUser.ID,
+			expected: nil,
+			err:      validation.NewError(validation.BadRequest, "missing user data"),
+			mockRepoBehaviour: func(mockRepo *mocks.UserRepository) {
+				mockRepo.On("FindByID", context.Background(), mock.Anything).
+					Return(nil, validation.NewError(validation.BadRequest, "missing user data"))
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			r := mocks.NewUserRepository(t)
+			c.mockRepoBehaviour(r)
+
+			s := NewService(logger.NewLogger(), r)
+			user, err := s.GetUserInfo(context.Background(), c.arg)
+
+			assert.Equal(t, c.err, err)
+			if err != nil {
+				assert.Empty(t, user)
 				return
 			}
 

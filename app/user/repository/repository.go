@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ryanadiputraa/unclatter/app/user"
+	"github.com/ryanadiputraa/unclatter/app/validation"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -25,4 +26,12 @@ func (r *repository) SaveOrUpdate(ctx context.Context, user user.User) error {
 			"first_name", "last_name",
 		}),
 	}).Create(&user).Error
+}
+
+func (r *repository) FindByID(ctx context.Context, userID string) (user *user.User, err error) {
+	err = r.db.Where("id = ?", userID).First(&user).Error
+	if err == gorm.ErrRecordNotFound {
+		err = validation.NewError(validation.BadRequest, "missing user data")
+	}
+	return
 }

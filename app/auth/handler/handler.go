@@ -41,18 +41,18 @@ func NewHandler(
 		jwtTokens:   jwtTokens,
 	}
 
-	r.GET("/signin/google", h.GoogleSignIn())
-	r.GET("/signin/google/callback", h.GoogleCallback())
+	r.GET("/signin/google", h.googleSignIn())
+	r.GET("/signin/google/callback", h.googleCallback())
 }
 
-func (h *handler) GoogleSignIn() echo.HandlerFunc {
+func (h *handler) googleSignIn() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		url := h.googleOauth.GetSignInURL()
 		return c.Redirect(http.StatusTemporaryRedirect, url)
 	}
 }
 
-func (h *handler) GoogleCallback() echo.HandlerFunc {
+func (h *handler) googleCallback() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		code := c.QueryParam("code")
 		state := c.QueryParam("state")
