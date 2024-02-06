@@ -12,12 +12,6 @@ import (
 	"gorm.io/gorm"
 )
 
-var testUser, _ = user.NewUser(user.NewUserArg{
-	Email:     "testuser@mail.com",
-	FirstName: "test",
-	LastName:  "user",
-})
-
 func TestSave(t *testing.T) {
 	gormDB, db, mock := test.NewMockDB(t)
 	defer db.Close()
@@ -35,7 +29,7 @@ func TestSave(t *testing.T) {
 			mockBehaviour: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.ExpectExec(expectedInsertQuery).
-					WithArgs(testUser.ID, testUser.Email, testUser.FirstName, testUser.LastName, testUser.CreatedAt).
+					WithArgs(test.TestUser.ID, test.TestUser.Email, test.TestUser.FirstName, test.TestUser.LastName, test.TestUser.CreatedAt).
 					WillReturnResult(sqlmock.NewResult(1, 1))
 				mock.ExpectCommit()
 			},
@@ -46,7 +40,7 @@ func TestSave(t *testing.T) {
 			mockBehaviour: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.ExpectExec(expectedInsertQuery).
-					WithArgs(testUser.ID, testUser.Email, testUser.FirstName, testUser.LastName, testUser.CreatedAt).
+					WithArgs(test.TestUser.ID, test.TestUser.Email, test.TestUser.FirstName, test.TestUser.LastName, test.TestUser.CreatedAt).
 					WillReturnError(gorm.ErrInvalidDB)
 				mock.ExpectRollback()
 			},
@@ -57,7 +51,7 @@ func TestSave(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			c.mockBehaviour(mock)
-			err := r.Save(context.Background(), *testUser)
+			err := r.Save(context.Background(), *test.TestUser)
 			assert.Equal(t, c.err, err)
 		})
 	}
@@ -88,16 +82,16 @@ func TestFindByID(t *testing.T) {
 						"last_name",
 						"created_at",
 					}).AddRow(
-						testUser.ID,
-						testUser.Email,
-						testUser.FirstName,
-						testUser.LastName,
-						testUser.CreatedAt,
+						test.TestUser.ID,
+						test.TestUser.Email,
+						test.TestUser.FirstName,
+						test.TestUser.LastName,
+						test.TestUser.CreatedAt,
 					),
 				)
 			},
-			arg:  testUser.ID,
-			user: testUser,
+			arg:  test.TestUser.ID,
+			user: test.TestUser,
 			err:  nil,
 		},
 		{
@@ -105,7 +99,7 @@ func TestFindByID(t *testing.T) {
 			mockBehaviour: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery(expectedQuery).WillReturnError(gorm.ErrRecordNotFound)
 			},
-			arg:  testUser.ID,
+			arg:  test.TestUser.ID,
 			user: nil,
 			err:  validation.NewError(validation.BadRequest, "missing user data"),
 		},
@@ -114,7 +108,7 @@ func TestFindByID(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			c.mockBehaviour(mock)
-			user, err := r.FindByID(context.Background(), testUser.ID)
+			user, err := r.FindByID(context.Background(), test.TestUser.ID)
 			assert.Equal(t, c.err, err)
 			if err != nil {
 				assert.Empty(t, user)
@@ -155,16 +149,16 @@ func TestFindByEmail(t *testing.T) {
 						"last_name",
 						"created_at",
 					}).AddRow(
-						testUser.ID,
-						testUser.Email,
-						testUser.FirstName,
-						testUser.LastName,
-						testUser.CreatedAt,
+						test.TestUser.ID,
+						test.TestUser.Email,
+						test.TestUser.FirstName,
+						test.TestUser.LastName,
+						test.TestUser.CreatedAt,
 					),
 				)
 			},
-			arg:  testUser.ID,
-			user: testUser,
+			arg:  test.TestUser.ID,
+			user: test.TestUser,
 			err:  nil,
 		},
 		{
@@ -172,7 +166,7 @@ func TestFindByEmail(t *testing.T) {
 			mockBehaviour: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery(expectedQuery).WillReturnError(gorm.ErrRecordNotFound)
 			},
-			arg:  testUser.ID,
+			arg:  test.TestUser.ID,
 			user: nil,
 			err:  validation.NewError(validation.BadRequest, "missing user data"),
 		},
@@ -181,7 +175,7 @@ func TestFindByEmail(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			c.mockBehaviour(mock)
-			user, err := r.FindByEmail(context.Background(), testUser.Email)
+			user, err := r.FindByEmail(context.Background(), test.TestUser.Email)
 			assert.Equal(t, c.err, err)
 			if err != nil {
 				assert.Empty(t, user)

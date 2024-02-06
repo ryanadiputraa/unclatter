@@ -5,8 +5,6 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/google/uuid"
-	"github.com/ryanadiputraa/unclatter/app/auth"
 	"github.com/ryanadiputraa/unclatter/test"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
@@ -19,12 +17,6 @@ func TestSave(t *testing.T) {
 	r := NewRepository(gormDB)
 	expectedQuery := "^SELECT (.+) FROM \"auth_providers\" *"
 	expectedExec := "INSERT INTO \"auth_providers\""
-	userID := uuid.NewString()
-	authProvider := auth.NewAuthProvider(auth.NewAuthProviderArg{
-		Provider:       "google",
-		ProviderUserID: "1283719231123",
-		UserID:         userID,
-	})
 
 	cases := []struct {
 		name          string
@@ -37,7 +29,7 @@ func TestSave(t *testing.T) {
 				mock.ExpectQuery(expectedQuery).WillReturnError(gorm.ErrRecordNotFound)
 				mock.ExpectBegin()
 				mock.ExpectExec(expectedExec).
-					WithArgs(authProvider.ID, authProvider.Provider, authProvider.ProviderUserID, authProvider.UserID, authProvider.CreatedAt).
+					WithArgs(test.TestAuthProvider.ID, test.TestAuthProvider.Provider, test.TestAuthProvider.ProviderUserID, test.TestAuthProvider.UserID, test.TestAuthProvider.CreatedAt).
 					WillReturnResult(sqlmock.NewResult(1, 1))
 				mock.ExpectCommit()
 			},
@@ -49,7 +41,7 @@ func TestSave(t *testing.T) {
 				mock.ExpectQuery(expectedQuery).WillReturnError(gorm.ErrRecordNotFound)
 				mock.ExpectBegin()
 				mock.ExpectExec(expectedExec).
-					WithArgs(authProvider.ID, authProvider.Provider, authProvider.ProviderUserID, authProvider.UserID, authProvider.CreatedAt).
+					WithArgs(test.TestAuthProvider.ID, test.TestAuthProvider.Provider, test.TestAuthProvider.ProviderUserID, test.TestAuthProvider.UserID, test.TestAuthProvider.CreatedAt).
 					WillReturnError(gorm.ErrInvalidDB)
 				mock.ExpectRollback()
 			},
@@ -65,11 +57,11 @@ func TestSave(t *testing.T) {
 					"user_id",
 					"created_at",
 				}).AddRow(
-					authProvider.ID,
-					authProvider.Provider,
-					authProvider.ProviderUserID,
-					authProvider.UserID,
-					authProvider.CreatedAt)
+					test.TestAuthProvider.ID,
+					test.TestAuthProvider.Provider,
+					test.TestAuthProvider.ProviderUserID,
+					test.TestAuthProvider.UserID,
+					test.TestAuthProvider.CreatedAt)
 
 				mock.ExpectQuery(expectedQuery).WillReturnRows(rows)
 			},
@@ -80,7 +72,7 @@ func TestSave(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			c.mockBehaviour(mock)
-			err := r.Save(context.Background(), *authProvider)
+			err := r.Save(context.Background(), *test.TestAuthProvider)
 			assert.Equal(t, c.err, err)
 		})
 	}

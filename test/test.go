@@ -3,10 +3,31 @@ package test
 import (
 	"database/sql"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/google/uuid"
+	"github.com/ryanadiputraa/unclatter/app/auth"
+	"github.com/ryanadiputraa/unclatter/app/user"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+)
+
+var (
+	TestUser = &user.User{
+		ID:        uuid.NewString(),
+		Email:     "johndoe@mail.com",
+		FirstName: "John",
+		LastName:  "Doe",
+		CreatedAt: time.Now().UTC(),
+	}
+	TestAuthProvider = &auth.AuthProvider{
+		ID:             uuid.NewString(),
+		Provider:       "google",
+		ProviderUserID: "129301293801231",
+		UserID:         TestUser.ID,
+		CreatedAt:      time.Now().UTC(),
+	}
 )
 
 func NewMockDB(t *testing.T) (*gorm.DB, *sql.DB, sqlmock.Sqlmock) {
