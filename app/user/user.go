@@ -45,6 +45,7 @@ type UserService interface {
 }
 
 type UserRepository interface {
-	SaveOrUpdate(ctx context.Context, user User) error
+	Save(ctx context.Context, user User) error
 	FindByID(ctx context.Context, userID string) (*User, error)
+	FindByEmail(ctx context.Context, email string) (*User, error)
 }

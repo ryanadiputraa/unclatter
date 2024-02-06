@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ryanadiputraa/unclatter/app/user"
+	"github.com/ryanadiputraa/unclatter/app/validation"
 	"github.com/ryanadiputraa/unclatter/pkg/logger"
 )
 
@@ -19,16 +20,24 @@ func NewService(log logger.Logger, repository user.UserRepository) user.UserServ
 	}
 }
 
-func (s *service) CreateUser(ctx context.Context, arg user.NewUserArg) (created *user.User, err error) {
-	created, err = user.NewUser(arg)
+func (s *service) CreateUser(ctx context.Context, arg user.NewUserArg) (saved *user.User, err error) {
+	saved, err = s.repository.FindByEmail(ctx, arg.Email)
 	if err != nil {
-		s.log.Warn("user service: fail to create new user", err.Error())
-		return
-	}
-
-	if err = s.repository.SaveOrUpdate(ctx, *created); err != nil {
-		s.log.Error("user service: fail to save user", err.Error())
-		return
+		if _, ok := err.(*validation.Error); !ok {
+			s.log.Error("user service: fail to save user", err.Error())
+			return
+		}
+		var newUser *user.User
+		newUser, err = user.NewUser(arg)
+		if err != nil {
+			s.log.Warn("user service: fail to create new user", err.Error())
+			return
+		}
+		if err = s.repository.Save(ctx, *newUser); err != nil {
+			s.log.Error("user service: fail to save user", err.Error())
+			return
+		}
+		return newUser, nil
 	}
 	return
 }

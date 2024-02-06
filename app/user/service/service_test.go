@@ -12,11 +12,19 @@ import (
 	"github.com/ryanadiputraa/unclatter/pkg/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"gorm.io/gorm"
 )
 
 const (
-	dummyEmail = "testuser@mail.com"
+	dummyEmail         = "testuser@mail.com"
+	missingUserDataStr = "missing user data"
 )
+
+var testUser, _ = user.NewUser(user.NewUserArg{
+	Email:     "testuser@mail.com",
+	FirstName: "test",
+	LastName:  "user",
+})
 
 func TestCreateUser(t *testing.T) {
 	cases := []struct {
@@ -42,7 +50,8 @@ func TestCreateUser(t *testing.T) {
 			},
 			err: nil,
 			mockRepoBehaviour: func(mockRepo *mocks.UserRepository) {
-				mockRepo.On("SaveOrUpdate", context.Background(), mock.Anything).Return(nil)
+				mockRepo.On("FindByEmail", context.Background(), mock.Anything).Return(nil, validation.NewError(validation.BadRequest, missingUserDataStr))
+				mockRepo.On("Save", context.Background(), mock.Anything).Return(nil)
 			},
 		},
 		{
@@ -55,21 +64,63 @@ func TestCreateUser(t *testing.T) {
 			expected: nil,
 			err:      errors.New("invalid email address"),
 			mockRepoBehaviour: func(mockRepo *mocks.UserRepository) {
-				// no behaviour needed
+				mockRepo.On("FindByEmail", context.Background(), mock.Anything).Return(nil, validation.NewError(validation.BadRequest, missingUserDataStr))
 			},
 		},
 		{
-			name: "should fail to create user when error duplicate email from repository",
+			name: "should fail to create user and return error from repository",
 			arg: user.NewUserArg{
 				Email:     dummyEmail,
 				FirstName: "test",
 				LastName:  "lastname",
 			},
 			expected: nil,
-			err:      validation.NewError(validation.BadRequest, "email already registered"),
+			err:      gorm.ErrInvalidDB,
 			mockRepoBehaviour: func(mockRepo *mocks.UserRepository) {
-				mockRepo.On("SaveOrUpdate", context.Background(), mock.Anything).
-					Return(validation.NewError(validation.BadRequest, "email already registered"))
+				mockRepo.On("FindByEmail", context.Background(), mock.Anything).Return(nil, validation.NewError(validation.BadRequest, missingUserDataStr))
+				mockRepo.On("Save", context.Background(), mock.Anything).
+					Return(gorm.ErrInvalidDB)
+			},
+		},
+		{
+			name: "should fail to create user and return error from repository",
+			arg: user.NewUserArg{
+				Email:     dummyEmail,
+				FirstName: "test",
+				LastName:  "lastname",
+			},
+			expected: nil,
+			err:      gorm.ErrInvalidDB,
+			mockRepoBehaviour: func(mockRepo *mocks.UserRepository) {
+				mockRepo.On("FindByEmail", context.Background(), mock.Anything).Return(nil, validation.NewError(validation.BadRequest, missingUserDataStr))
+				mockRepo.On("Save", context.Background(), mock.Anything).
+					Return(gorm.ErrInvalidDB)
+			},
+		},
+		{
+			name: "should fail to create user and return error from find user by email repository",
+			arg: user.NewUserArg{
+				Email:     dummyEmail,
+				FirstName: "test",
+				LastName:  "lastname",
+			},
+			expected: nil,
+			err:      gorm.ErrInvalidDB,
+			mockRepoBehaviour: func(mockRepo *mocks.UserRepository) {
+				mockRepo.On("FindByEmail", context.Background(), mock.Anything).Return(nil, gorm.ErrInvalidDB)
+			},
+		},
+		{
+			name: "should return already saved user",
+			arg: user.NewUserArg{
+				Email:     dummyEmail,
+				FirstName: "test",
+				LastName:  "lastname",
+			},
+			expected: testUser,
+			err:      nil,
+			mockRepoBehaviour: func(mockRepo *mocks.UserRepository) {
+				mockRepo.On("FindByEmail", context.Background(), mock.Anything).Return(testUser, nil)
 			},
 		},
 	}
@@ -97,13 +148,6 @@ func TestCreateUser(t *testing.T) {
 }
 
 func TestGetUserInfo(t *testing.T) {
-	testUser, err := user.NewUser(user.NewUserArg{
-		Email:     "test@mail.com",
-		FirstName: "test",
-		LastName:  "lastname",
-	})
-	assert.NoError(t, err)
-
 	cases := []struct {
 		name              string
 		arg               string
@@ -124,10 +168,10 @@ func TestGetUserInfo(t *testing.T) {
 			name:     "should return error when user not found",
 			arg:      testUser.ID,
 			expected: nil,
-			err:      validation.NewError(validation.BadRequest, "missing user data"),
+			err:      validation.NewError(validation.BadRequest, missingUserDataStr),
 			mockRepoBehaviour: func(mockRepo *mocks.UserRepository) {
 				mockRepo.On("FindByID", context.Background(), mock.Anything).
-					Return(nil, validation.NewError(validation.BadRequest, "missing user data"))
+					Return(nil, validation.NewError(validation.BadRequest, missingUserDataStr))
 			},
 		},
 	}

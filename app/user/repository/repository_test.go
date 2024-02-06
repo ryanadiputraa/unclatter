@@ -12,19 +12,18 @@ import (
 	"gorm.io/gorm"
 )
 
-func TestSaveOrUpdate(t *testing.T) {
+var testUser, _ = user.NewUser(user.NewUserArg{
+	Email:     "testuser@mail.com",
+	FirstName: "test",
+	LastName:  "user",
+})
+
+func TestSave(t *testing.T) {
 	gormDB, db, mock := test.NewMockDB(t)
 	defer db.Close()
 
 	r := NewRepository(gormDB)
 	expectedInsertQuery := "INSERT INTO \"users\""
-
-	user, err := user.NewUser(user.NewUserArg{
-		Email:     "testuser@mail.com",
-		FirstName: "test",
-		LastName:  "user",
-	})
-	assert.NoError(t, err)
 
 	cases := []struct {
 		name          string
@@ -36,7 +35,7 @@ func TestSaveOrUpdate(t *testing.T) {
 			mockBehaviour: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.ExpectExec(expectedInsertQuery).
-					WithArgs(user.ID, user.Email, user.FirstName, user.LastName, user.CreatedAt).
+					WithArgs(testUser.ID, testUser.Email, testUser.FirstName, testUser.LastName, testUser.CreatedAt).
 					WillReturnResult(sqlmock.NewResult(1, 1))
 				mock.ExpectCommit()
 			},
@@ -47,7 +46,7 @@ func TestSaveOrUpdate(t *testing.T) {
 			mockBehaviour: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.ExpectExec(expectedInsertQuery).
-					WithArgs(user.ID, user.Email, user.FirstName, user.LastName, user.CreatedAt).
+					WithArgs(testUser.ID, testUser.Email, testUser.FirstName, testUser.LastName, testUser.CreatedAt).
 					WillReturnError(gorm.ErrInvalidDB)
 				mock.ExpectRollback()
 			},
@@ -58,7 +57,7 @@ func TestSaveOrUpdate(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			c.mockBehaviour(mock)
-			err := r.SaveOrUpdate(context.Background(), *user)
+			err := r.Save(context.Background(), *testUser)
 			assert.Equal(t, c.err, err)
 		})
 	}
@@ -70,12 +69,6 @@ func TestFindByID(t *testing.T) {
 
 	r := NewRepository(gormDB)
 	expectedQuery := "^SELECT (.+) FROM \"users\" *"
-	testUser, err := user.NewUser(user.NewUserArg{
-		Email:     "testuser@mail.com",
-		FirstName: "test",
-		LastName:  "user",
-	})
-	assert.NoError(t, err)
 
 	cases := []struct {
 		name          string
@@ -122,6 +115,73 @@ func TestFindByID(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			c.mockBehaviour(mock)
 			user, err := r.FindByID(context.Background(), testUser.ID)
+			assert.Equal(t, c.err, err)
+			if err != nil {
+				assert.Empty(t, user)
+				return
+			}
+
+			assert.Equal(t, c.user.ID, user.ID)
+			assert.Equal(t, c.user.Email, user.Email)
+			assert.Equal(t, c.user.FirstName, user.FirstName)
+			assert.Equal(t, c.user.LastName, user.LastName)
+			assert.NotNil(t, user.CreatedAt)
+		})
+	}
+}
+
+func TestFindByEmail(t *testing.T) {
+	gormDB, db, mock := test.NewMockDB(t)
+	defer db.Close()
+
+	r := NewRepository(gormDB)
+	expectedQuery := "^SELECT (.+) FROM \"users\" *"
+
+	cases := []struct {
+		name          string
+		mockBehaviour func(mock sqlmock.Sqlmock)
+		arg           string
+		user          *user.User
+		err           error
+	}{
+		{
+			name: "should return user with given id",
+			mockBehaviour: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery(expectedQuery).WillReturnRows(
+					sqlmock.NewRows([]string{
+						"id",
+						"email",
+						"first_name",
+						"last_name",
+						"created_at",
+					}).AddRow(
+						testUser.ID,
+						testUser.Email,
+						testUser.FirstName,
+						testUser.LastName,
+						testUser.CreatedAt,
+					),
+				)
+			},
+			arg:  testUser.ID,
+			user: testUser,
+			err:  nil,
+		},
+		{
+			name: "should return validation error missing user data when no user found with given id",
+			mockBehaviour: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery(expectedQuery).WillReturnError(gorm.ErrRecordNotFound)
+			},
+			arg:  testUser.ID,
+			user: nil,
+			err:  validation.NewError(validation.BadRequest, "missing user data"),
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			c.mockBehaviour(mock)
+			user, err := r.FindByEmail(context.Background(), testUser.Email)
 			assert.Equal(t, c.err, err)
 			if err != nil {
 				assert.Empty(t, user)
