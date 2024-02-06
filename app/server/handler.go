@@ -12,6 +12,7 @@ import (
 	_userService "github.com/ryanadiputraa/unclatter/app/user/service"
 	"github.com/ryanadiputraa/unclatter/pkg/jwt"
 	"github.com/ryanadiputraa/unclatter/pkg/oauth"
+	"github.com/ryanadiputraa/unclatter/pkg/scrapper"
 )
 
 func (s *Server) setupHandlers() {
@@ -21,6 +22,8 @@ func (s *Server) setupHandlers() {
 
 	googleOauth := oauth.NewGoogleOauth(s.config.GoogleOauth)
 	jwtTokens := jwt.NewJWTTokens(s.config.JWT)
+	scrapperLib := scrapper.NewScrapper()
+
 	authMiddleware := middleware.NewAuthMiddleware(s.log, s.config.JWT, jwtTokens)
 
 	userRepository := _userRepository.NewRepository(s.db)
@@ -31,6 +34,6 @@ func (s *Server) setupHandlers() {
 	authService := _authService.NewService(s.log, authRepository)
 	authHandler.NewHandler(auth, s.config, s.log, authService, userService, googleOauth, jwtTokens)
 
-	articleService := _articleService.NewService()
+	articleService := _articleService.NewService(s.log, scrapperLib)
 	articleHandler.NewHandler(article, articleService, *authMiddleware)
 }

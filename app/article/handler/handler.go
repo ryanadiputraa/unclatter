@@ -29,8 +29,15 @@ func (h *handler) ScrapeContent() echo.HandlerFunc {
 			})
 		}
 
+		content, err := h.articleService.ScrapeContent(c.Request().Context(), url)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]any{
+				"message": "fail to get page content",
+			})
+		}
+
 		return c.JSON(http.StatusOK, map[string]any{
-			"data": "<html></html>",
+			"data": content,
 		})
 	}
 }
