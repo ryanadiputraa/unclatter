@@ -4,6 +4,7 @@ import (
 	authHandler "github.com/ryanadiputraa/unclatter/app/auth/handler"
 	_authRepository "github.com/ryanadiputraa/unclatter/app/auth/repository"
 	_authService "github.com/ryanadiputraa/unclatter/app/auth/service"
+	"github.com/ryanadiputraa/unclatter/app/middleware"
 	userHandler "github.com/ryanadiputraa/unclatter/app/user/handler"
 	_userRepository "github.com/ryanadiputraa/unclatter/app/user/repository"
 	_userService "github.com/ryanadiputraa/unclatter/app/user/service"
@@ -17,10 +18,11 @@ func (s *Server) setupHandlers() {
 
 	googleOauth := oauth.NewGoogleOauth(s.config.GoogleOauth)
 	jwtTokens := jwt.NewJWTTokens(s.config.JWT)
+	authMiddleware := middleware.NewAuthMiddleware(s.log, s.config.JWT, jwtTokens)
 
 	userRepository := _userRepository.NewRepository(s.db)
 	userService := _userService.NewService(s.log, userRepository)
-	userHandler.NewUserHandler(user, userService)
+	userHandler.NewUserHandler(user, userService, *authMiddleware)
 
 	authRepository := _authRepository.NewRepository(s.db)
 	authService := _authService.NewService(s.log, authRepository)
