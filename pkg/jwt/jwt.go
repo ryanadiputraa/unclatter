@@ -50,7 +50,7 @@ func (j *jwtTokens) GenereateJWTWithClaims(userID string) (*JWT, error) {
 }
 
 func (j *jwtTokens) ParseJWTClaims(accessToken string) (*Claims, error) {
-	token, err := jwt.Parse(accessToken, func(t *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(accessToken, &Claims{}, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signin method: %v", t.Header["alg"])
 		}
@@ -60,9 +60,12 @@ func (j *jwtTokens) ParseJWTClaims(accessToken string) (*Claims, error) {
 		return nil, err
 	}
 
+	if !token.Valid {
+		return nil, fmt.Errorf("invalid token")
+	}
 	claims, ok := token.Claims.(*Claims)
-	if !ok || !token.Valid {
-		return nil, err
+	if !ok {
+		return nil, fmt.Errorf("fail to cast jwt claims")
 	}
 
 	return claims, nil

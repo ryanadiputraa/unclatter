@@ -23,8 +23,8 @@ type Error struct {
 	Message string
 }
 
-func NewError(errCode, msg string) error {
-	return Error{
+func NewError(errCode, msg string) *Error {
+	return &Error{
 		ErrCode: errCode,
 		Message: msg,
 	}

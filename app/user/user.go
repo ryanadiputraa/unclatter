@@ -41,8 +41,11 @@ func NewUser(arg NewUserArg) (*User, error) {
 
 type UserService interface {
 	CreateUser(ctx context.Context, arg NewUserArg) (*User, error)
+	GetUserInfo(ctx context.Context, userID string) (*User, error)
 }
 
 type UserRepository interface {
-	SaveOrUpdate(c context.Context, user User) error
+	Save(ctx context.Context, user User) error
+	FindByID(ctx context.Context, userID string) (*User, error)
+	FindByEmail(ctx context.Context, email string) (*User, error)
 }
