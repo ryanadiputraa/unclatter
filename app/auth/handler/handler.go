@@ -48,7 +48,7 @@ func NewHandler(
 func (h *handler) googleSignIn() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		url := h.googleOauth.GetSignInURL()
-		return c.Redirect(http.StatusTemporaryRedirect, url)
+		return c.Redirect(http.StatusSeeOther, url)
 	}
 }
 
@@ -92,12 +92,15 @@ func (h *handler) googleCallback() echo.HandlerFunc {
 			return h.redirectWithError(validation.ServerErr)(c)
 		}
 
-		return c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("%v/auth?access_token=%v", h.config.FrontendURL, jwtTokens.AccessToken))
+		return c.Redirect(
+			http.StatusSeeOther,
+			fmt.Sprintf("%v/auth?access_token=%v&expires_at=%v", h.config.FrontendURL, jwtTokens.AccessToken, jwtTokens.ExpiresAt),
+		)
 	}
 }
 
 func (h *handler) redirectWithError(err string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return c.Redirect(http.StatusTemporaryRedirect, h.config.FrontendURL+"/auth?err="+err)
+		return c.Redirect(http.StatusSeeOther, h.config.FrontendURL+"/auth?err="+err)
 	}
 }

@@ -12,6 +12,7 @@ const expiresAt = time.Hour * 24
 
 type JWT struct {
 	AccessToken string `json:"access_token"`
+	ExpiresAt   string `json:"expires_at"`
 }
 
 type Claims struct {
@@ -46,7 +47,10 @@ func (j *jwtTokens) GenereateJWTWithClaims(userID string) (*JWT, error) {
 		return nil, err
 	}
 
-	return &JWT{AccessToken: accessToken}, nil
+	return &JWT{
+		AccessToken: accessToken,
+		ExpiresAt:   time.Now().UTC().Add(expiresAt).Format(time.RFC3339Nano),
+	}, nil
 }
 
 func (j *jwtTokens) ParseJWTClaims(accessToken string) (*Claims, error) {
