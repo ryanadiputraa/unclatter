@@ -1,6 +1,7 @@
 package server
 
 import (
+	echoMiddleware "github.com/labstack/echo/v4/middleware"
 	articleHandler "github.com/ryanadiputraa/unclatter/app/article/handler"
 	_articleService "github.com/ryanadiputraa/unclatter/app/article/service"
 	authHandler "github.com/ryanadiputraa/unclatter/app/auth/handler"
@@ -16,6 +17,8 @@ import (
 )
 
 func (s *Server) setupHandlers() {
+	s.web.Use(echoMiddleware.CORS())
+
 	auth := s.web.Group("/auth")
 	user := s.web.Group("/api/users")
 	article := s.web.Group("/api/articles")
