@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/ryanadiputraa/unclatter/app/article"
 	"github.com/ryanadiputraa/unclatter/app/auth"
 	"github.com/ryanadiputraa/unclatter/app/validation"
 )
@@ -16,6 +17,7 @@ type User struct {
 	FirstName    string              `json:"first_name" gorm:"type:varchar;not null"`
 	LastName     string              `json:"last_name" gorm:"type:varchar;not null"`
 	AuthProvider []auth.AuthProvider `json:"-"`
+	Articles     []article.Article   `json:"-"`
 	CreatedAt    time.Time           `json:"-" gorm:"not null"`
 }
 
