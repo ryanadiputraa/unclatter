@@ -28,7 +28,7 @@ func TestNewUser(t *testing.T) {
 			expected: &Article{
 				ID:          uuid,
 				Title:       "Title",
-				Content:     "<p>Sample Content Body",
+				Content:     "<p>Sample Content Body</p>",
 				ArticleLink: "https://unclatter.com",
 				UserID:      uuid,
 				CreatedAt:   time.Now().UTC(),
