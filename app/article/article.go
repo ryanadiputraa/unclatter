@@ -24,17 +24,25 @@ type NewArticleArg struct {
 	UserID      string
 }
 
+type BookmarkPayload struct {
+	Title       string `json:"title" validate:"required"`
+	Content     string `json:"content" validate:"required"`
+	ArticleLink string `json:"article_link" validate:"required,http_url"`
+}
+
 func NewArticle(arg NewArticleArg) *Article {
 	return &Article{
-		ID:        uuid.NewString(),
-		Title:     arg.Title,
-		Content:   arg.Content,
-		UserID:    arg.UserID,
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
+		ID:          uuid.NewString(),
+		Title:       arg.Title,
+		Content:     arg.Content,
+		ArticleLink: arg.ArticleLink,
+		UserID:      arg.UserID,
+		CreatedAt:   time.Now().UTC(),
+		UpdatedAt:   time.Now().UTC(),
 	}
 }
 
 type ArticleService interface {
 	ScrapeContent(ctx context.Context, url string) (string, error)
+	BookmarkArticle(ctx context.Context, arg BookmarkPayload, userID string) (*Article, error)
 }
