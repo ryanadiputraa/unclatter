@@ -15,6 +15,7 @@ import (
 	"github.com/ryanadiputraa/unclatter/pkg/oauth"
 	"github.com/ryanadiputraa/unclatter/pkg/sanitizer"
 	"github.com/ryanadiputraa/unclatter/pkg/scrapper"
+	"github.com/ryanadiputraa/unclatter/pkg/validator"
 )
 
 func (s *Server) setupHandlers() {
@@ -24,6 +25,7 @@ func (s *Server) setupHandlers() {
 	user := s.web.Group("/api/users")
 	article := s.web.Group("/api/articles")
 
+	validator := validator.NewValidator()
 	googleOauth := oauth.NewGoogleOauth(s.config.GoogleOauth)
 	jwtTokens := jwt.NewJWTTokens(s.config.JWT)
 	scrapper := scrapper.NewScrapper()
@@ -40,5 +42,5 @@ func (s *Server) setupHandlers() {
 	authHandler.NewHandler(auth, s.config, s.log, authService, userService, googleOauth, jwtTokens)
 
 	articleService := _articleService.NewService(s.log, scrapper, sanitizer)
-	articleHandler.NewHandler(article, articleService, *authMiddleware)
+	articleHandler.NewHandler(article, articleService, *authMiddleware, validator)
 }
