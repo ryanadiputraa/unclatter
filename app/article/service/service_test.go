@@ -24,7 +24,7 @@ func TestBookmark(t *testing.T) {
 		err      error
 	}{
 		{
-			name: "should return created user",
+			name: "should return bookmarked article",
 			arg: article.BookmarkPayload{
 				Title:       "Content Title",
 				Content:     `<div><a onblur="alert(secret)" href="http://www.google.com">Google</a><p>article content</p></div>`,

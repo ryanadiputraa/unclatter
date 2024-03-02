@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewUser(t *testing.T) {
+func TestNewUserAuthProvider(t *testing.T) {
 	uuid1 := uuid.NewString()
 	uuid2 := uuid.NewString()
 

@@ -26,7 +26,7 @@ func TestAddUserAuthProvider(t *testing.T) {
 		mockRepoBehaviour func(mockRepo *mocks.AuthProviderRepository)
 	}{
 		{
-			name: "should return created user",
+			name: "should return added user auth provider",
 			arg: auth.NewAuthProviderArg{
 				Provider:       test.TestAuthProvider.Provider,
 				ProviderUserID: test.TestAuthProvider.ProviderUserID,
