@@ -139,7 +139,7 @@ func TestFindByEmail(t *testing.T) {
 		err           error
 	}{
 		{
-			name: "should return user with given id",
+			name: "should return user with given email",
 			mockBehaviour: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery(expectedQuery).WillReturnRows(
 					sqlmock.NewRows([]string{
@@ -162,7 +162,7 @@ func TestFindByEmail(t *testing.T) {
 			err:  nil,
 		},
 		{
-			name: "should return validation error missing user data when no user found with given id",
+			name: "should return validation error missing user data when no user found with given email",
 			mockBehaviour: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery(expectedQuery).WillReturnError(gorm.ErrRecordNotFound)
 			},

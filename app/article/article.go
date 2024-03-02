@@ -46,3 +46,7 @@ type ArticleService interface {
 	ScrapeContent(ctx context.Context, url string) (string, error)
 	BookmarkArticle(ctx context.Context, arg BookmarkPayload, userID string) (*Article, error)
 }
+
+type ArticleRepository interface {
+	Save(ctx context.Context, arg Article) error
+}

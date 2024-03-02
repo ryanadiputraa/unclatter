@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewUser(t *testing.T) {
+func TestNewArticle(t *testing.T) {
 	uuid := uuid.NewString()
 
 	cases := []struct {

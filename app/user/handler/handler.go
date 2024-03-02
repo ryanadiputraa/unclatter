@@ -27,7 +27,7 @@ func (h *handler) getUserInfo() echo.HandlerFunc {
 		user, err := h.userService.GetUserInfo(c.Request().Context(), rc.UserID)
 		if err != nil {
 			if vErr, ok := err.(*validation.Error); ok {
-				return c.JSON(http.StatusBadRequest, map[string]any{
+				return c.JSON(validation.HttpErrMap[vErr.Err], map[string]any{
 					"message": vErr.Message,
 				})
 			}
