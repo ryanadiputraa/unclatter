@@ -50,8 +50,8 @@ func (h *handler) ScrapeContent() echo.HandlerFunc {
 func (h *handler) BookmarkArticle() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		rc := c.(*middleware.RequestContext)
-
 		var payload article.BookmarkPayload
+
 		c.Bind(&payload)
 		if err, errMap := h.validator.Validate(payload); err != nil {
 			return c.JSON(http.StatusBadRequest, map[string]any{
@@ -63,7 +63,7 @@ func (h *handler) BookmarkArticle() echo.HandlerFunc {
 		bookmarked, err := h.articleService.BookmarkArticle(c.Request().Context(), payload, rc.UserID)
 		if err != nil {
 			if vErr, ok := err.(*validation.Error); ok {
-				return c.JSON(http.StatusBadRequest, map[string]any{
+				return c.JSON(validation.HttpErrMap[vErr.Err], map[string]any{
 					"message": vErr.Message,
 				})
 			}

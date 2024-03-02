@@ -2,6 +2,7 @@ package validation
 
 import (
 	"errors"
+	"net/http"
 )
 
 const (
@@ -18,14 +19,25 @@ const (
 	ExchangeCodeFailed   = "exchange_code_failed"
 )
 
+var (
+	HttpErrMap = map[string]int{
+		"bad_request":  http.StatusBadRequest,
+		"unauthorized": http.StatusUnauthorized,
+		"forbidden":    http.StatusForbidden,
+		"not_found":    http.StatusNotFound,
+		"server_err":   http.StatusInternalServerError,
+		"bad_gateway":  http.StatusBadGateway,
+	}
+)
+
 type Error struct {
-	ErrCode string
+	Err     string
 	Message string
 }
 
 func NewError(errCode, msg string) *Error {
 	return &Error{
-		ErrCode: errCode,
+		Err:     errCode,
 		Message: msg,
 	}
 }
