@@ -3,6 +3,7 @@ package server
 import (
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
 	articleHandler "github.com/ryanadiputraa/unclatter/app/article/handler"
+	_articleRepository "github.com/ryanadiputraa/unclatter/app/article/repository"
 	_articleService "github.com/ryanadiputraa/unclatter/app/article/service"
 	authHandler "github.com/ryanadiputraa/unclatter/app/auth/handler"
 	_authRepository "github.com/ryanadiputraa/unclatter/app/auth/repository"
@@ -41,6 +42,7 @@ func (s *Server) setupHandlers() {
 	authService := _authService.NewService(s.log, authRepository)
 	authHandler.NewHandler(auth, s.config, s.log, authService, userService, googleOauth, jwtTokens)
 
-	articleService := _articleService.NewService(s.log, scrapper, sanitizer)
+	articleRepository := _articleRepository.NewRepository(s.db)
+	articleService := _articleService.NewService(s.log, scrapper, sanitizer, articleRepository)
 	articleHandler.NewHandler(article, articleService, *authMiddleware, validator)
 }

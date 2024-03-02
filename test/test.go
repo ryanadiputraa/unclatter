@@ -7,6 +7,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
+	"github.com/ryanadiputraa/unclatter/app/article"
 	"github.com/ryanadiputraa/unclatter/app/auth"
 	"github.com/ryanadiputraa/unclatter/app/user"
 	"gorm.io/driver/postgres"
@@ -27,6 +28,15 @@ var (
 		ProviderUserID: "129301293801231",
 		UserID:         TestUser.ID,
 		CreatedAt:      time.Now().UTC(),
+	}
+	TestArticle = &article.Article{
+		ID:          uuid.NewString(),
+		Title:       "Title",
+		Content:     "<div><a onblur=\"alert(secret)\" href=\"http://www.google.com\">Google</a><p>article content</p></div>",
+		ArticleLink: "https://unclatter.com",
+		UserID:      TestUser.ID,
+		CreatedAt:   time.Now().UTC(),
+		UpdatedAt:   time.Now().UTC(),
 	}
 )
 
