@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
 	"github.com/ryanadiputraa/unclatter/app/auth"
 	"github.com/ryanadiputraa/unclatter/app/user"
 	"github.com/ryanadiputraa/unclatter/app/validation"
@@ -24,7 +23,7 @@ type handler struct {
 }
 
 func NewHandler(
-	r *echo.Group,
+	web *http.ServeMux,
 	config *config.Config,
 	log logger.Logger,
 	authService auth.AuthService,
@@ -41,66 +40,69 @@ func NewHandler(
 		jwtTokens:   jwtTokens,
 	}
 
-	r.GET("/signin/google", h.googleSignIn())
-	r.GET("/signin/google/callback", h.googleCallback())
+	web.HandleFunc("GET /auth/signin/google", h.googleSignIn())
+	web.HandleFunc("GET /auth/signin/google/callback", h.googleCallback())
 }
 
-func (h *handler) googleSignIn() echo.HandlerFunc {
-	return func(c echo.Context) error {
+func (h *handler) googleSignIn() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		url := h.googleOauth.GetSignInURL()
-		return c.Redirect(http.StatusSeeOther, url)
+		http.Redirect(w, r, url, http.StatusSeeOther)
 	}
 }
 
-func (h *handler) googleCallback() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		code := c.QueryParam("code")
-		state := c.QueryParam("state")
+func (h *handler) googleCallback() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		code := query.Get("code")
+		state := query.Get("state")
 
 		if state != h.config.GoogleOauth.State || code == "" {
 			h.log.Warn(fmt.Sprintf("auth handler: invalid callback; state=\"%v\" code=\"%v\"", state, code))
-			return h.redirectWithError(validation.InvalidCallbackParam)(c)
+			h.redirectWithError(w, r, validation.InvalidCallbackParam)
+			return
 		}
 
-		userInfo, err := h.googleOauth.ExchangeCodeWithUserInfo(c.Request().Context(), code)
+		userInfo, err := h.googleOauth.ExchangeCodeWithUserInfo(r.Context(), code)
 		if err != nil {
 			h.log.Error("auth handler: fail to exchange", err.Error())
-			return h.redirectWithError(validation.ExchangeCodeFailed)(c)
+			h.redirectWithError(w, r, validation.ExchangeCodeFailed)
+			return
 		}
 
-		user, err := h.userService.CreateUser(c.Request().Context(), user.NewUserArg{
+		user, err := h.userService.CreateUser(r.Context(), user.NewUserArg{
 			Email:     userInfo.Email,
 			FirstName: userInfo.FirstName,
 			LastName:  userInfo.LastName,
 		})
 		if err != nil {
-			return h.redirectWithError(validation.ServerErr)(c)
+			h.redirectWithError(w, r, validation.ServerErr)
+			return
 		}
 
-		_, err = h.authService.AddUserAuthProvider(c.Request().Context(), auth.NewAuthProviderArg{
+		_, err = h.authService.AddUserAuthProvider(r.Context(), auth.NewAuthProviderArg{
 			Provider:       "google",
 			ProviderUserID: userInfo.ID,
 			UserID:         user.ID,
 		})
 		if err != nil {
-			return h.redirectWithError(validation.ServerErr)(c)
+			h.redirectWithError(w, r, validation.ServerErr)
+			return
 		}
 
 		jwtTokens, err := h.jwtTokens.GenereateJWTWithClaims(user.ID)
 		if err != nil {
 			h.log.Error("auth handler: fail to generate jwt tokens", err.Error())
-			return h.redirectWithError(validation.ServerErr)(c)
+			h.redirectWithError(w, r, validation.ServerErr)
+			return
 		}
 
-		return c.Redirect(
-			http.StatusSeeOther,
-			fmt.Sprintf("%v/auth?access_token=%v&expires_at=%v", h.config.FrontendURL, jwtTokens.AccessToken, jwtTokens.ExpiresAt),
-		)
+		http.Redirect(w, r, fmt.Sprintf(
+			"%v/auth?access_token=%v&expires_at=%v", h.config.FrontendURL, jwtTokens.AccessToken, jwtTokens.ExpiresAt,
+		), http.StatusSeeOther)
 	}
 }
 
-func (h *handler) redirectWithError(err string) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		return c.Redirect(http.StatusSeeOther, h.config.FrontendURL+"/auth?err="+err)
-	}
+func (h *handler) redirectWithError(w http.ResponseWriter, r *http.Request, err string) {
+	http.Redirect(w, r, h.config.FrontendURL+"/auth?err="+err, http.StatusSeeOther)
 }

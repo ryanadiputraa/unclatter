@@ -7,7 +7,6 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/labstack/echo/v4"
 	"github.com/ryanadiputraa/unclatter/config"
 	"github.com/ryanadiputraa/unclatter/pkg/logger"
 	"gorm.io/gorm"
@@ -16,7 +15,7 @@ import (
 type Server struct {
 	config *config.Config
 	log    logger.Logger
-	web    *echo.Echo
+	web    *http.ServeMux
 	db     *gorm.DB
 }
 
@@ -24,7 +23,7 @@ func NewHTTPServer(config *config.Config, log logger.Logger, db *gorm.DB) *Serve
 	return &Server{
 		config: config,
 		log:    log,
-		web:    echo.New(),
+		web:    http.NewServeMux(),
 		db:     db,
 	}
 }
