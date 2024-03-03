@@ -17,6 +17,12 @@ Start server
 make server
 ```
 
+Run test cases
+
+```bash
+make test
+```
+
 ## API Spec 📝
 
 API Specification can be seen on `/docs` endpoint.
