@@ -3,41 +3,39 @@ package handler
 import (
 	"net/http"
 
-	"github.com/labstack/echo/v4"
 	"github.com/ryanadiputraa/unclatter/app/middleware"
 	"github.com/ryanadiputraa/unclatter/app/user"
 	"github.com/ryanadiputraa/unclatter/app/validation"
+	_http "github.com/ryanadiputraa/unclatter/pkg/http"
 )
 
 type handler struct {
+	rw          _http.ResponseWriter
 	userService user.UserService
 }
 
-func NewUserHandler(r *echo.Group, userService user.UserService, authMiddleware middleware.AuthMiddleware) {
+func NewUserHandler(web *http.ServeMux, rw _http.ResponseWriter, userService user.UserService, authMiddleware middleware.AuthMiddleware) {
 	h := &handler{
+		rw:          rw,
 		userService: userService,
 	}
 
-	r.GET("", h.getUserInfo(), authMiddleware.ParseJWTToken)
+	web.Handle("GET /api/users", authMiddleware.ParseJWTToken(h.getUserInfo()))
 }
 
-func (h *handler) getUserInfo() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		rc := c.(*middleware.RequestContext)
-		user, err := h.userService.GetUserInfo(c.Request().Context(), rc.UserID)
+func (h *handler) getUserInfo() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ac := r.Context().(*middleware.AuthContext)
+		user, err := h.userService.GetUserInfo(ac.Context, ac.UserID)
 		if err != nil {
 			if vErr, ok := err.(*validation.Error); ok {
-				return c.JSON(validation.HttpErrMap[vErr.Err], map[string]any{
-					"message": vErr.Message,
-				})
+				h.rw.WriteErrMessage(w, validation.HttpErrMap[vErr.Err], vErr.Message)
+				return
 			}
-			return c.JSON(http.StatusInternalServerError, map[string]any{
-				"message": "internal server error",
-			})
+			h.rw.WriteErrMessage(w, http.StatusInternalServerError, "internal server error")
+			return
 		}
 
-		return c.JSON(http.StatusOK, map[string]any{
-			"data": user,
-		})
+		h.rw.WriteResponseData(w, http.StatusOK, user)
 	}
 }
