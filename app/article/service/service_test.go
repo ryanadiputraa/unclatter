@@ -65,7 +65,7 @@ func TestBookmark(t *testing.T) {
 				CreatedAt:   time.Now().UTC(),
 				UpdatedAt:   time.Now().UTC(),
 			},
-			err: validation.NewError(validation.ServerErr, "fail to bookmark article"),
+			err: validation.NewError(validation.BadRequest, "title is already in use"),
 			mockRepoBehaviour: func(mockRepo *mocks.ArticleRepository) {
 				mockRepo.On("Save", context.Background(), mock.Anything).Return(validation.NewError(validation.BadRequest, "title is already in use"))
 			},

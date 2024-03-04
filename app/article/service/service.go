@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/ryanadiputraa/unclatter/app/article"
-	"github.com/ryanadiputraa/unclatter/app/validation"
 	"github.com/ryanadiputraa/unclatter/pkg/logger"
 	"github.com/ryanadiputraa/unclatter/pkg/sanitizer"
 	"github.com/ryanadiputraa/unclatter/pkg/scrapper"
@@ -44,8 +43,6 @@ func (s *service) BookmarkArticle(ctx context.Context, arg article.BookmarkPaylo
 	})
 
 	if err = s.repository.Save(ctx, *bookmarked); err != nil {
-		s.log.Error("article service: fail to bookmark article")
-		err = validation.NewError(validation.ServerErr, "fail to bookmark article")
 		return
 	}
 	return

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/ryanadiputraa/unclatter/app/article"
 	"github.com/ryanadiputraa/unclatter/app/validation"
@@ -20,7 +21,7 @@ func NewRepository(db *gorm.DB) article.ArticleRepository {
 
 func (r *repository) Save(ctx context.Context, arg article.Article) error {
 	err := r.db.Create(&arg).Error
-	if err == gorm.ErrDuplicatedKey {
+	if errors.Is(err, gorm.ErrDuplicatedKey) {
 		err = validation.NewError(validation.BadRequest, "title is already in use")
 	}
 	return err
