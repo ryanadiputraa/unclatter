@@ -15,7 +15,6 @@ import (
 	"github.com/ryanadiputraa/unclatter/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"gorm.io/gorm"
 )
 
 func TestBookmark(t *testing.T) {
@@ -68,7 +67,7 @@ func TestBookmark(t *testing.T) {
 			},
 			err: validation.NewError(validation.ServerErr, "fail to bookmark article"),
 			mockRepoBehaviour: func(mockRepo *mocks.ArticleRepository) {
-				mockRepo.On("Save", context.Background(), mock.Anything).Return(gorm.ErrInvalidDB)
+				mockRepo.On("Save", context.Background(), mock.Anything).Return(validation.NewError(validation.BadRequest, "title is already in use"))
 			},
 		},
 	}
