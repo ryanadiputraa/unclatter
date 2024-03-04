@@ -2,8 +2,8 @@ package middleware
 
 import "net/http"
 
-func CORSMiddleware() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func CORSMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
@@ -12,5 +12,7 @@ func CORSMiddleware() http.HandlerFunc {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-	}
+
+		next.ServeHTTP(w, r)
+	})
 }

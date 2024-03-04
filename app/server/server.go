@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/ryanadiputraa/unclatter/app/middleware"
 	"github.com/ryanadiputraa/unclatter/config"
 	"github.com/ryanadiputraa/unclatter/pkg/logger"
 	"gorm.io/gorm"
@@ -30,10 +31,11 @@ func NewHTTPServer(config *config.Config, log logger.Logger, db *gorm.DB) *Serve
 
 func (s *Server) ServeHTTP() error {
 	s.setupHandlers()
+	handler := middleware.CORSMiddleware(s.web)
 
 	server := &http.Server{
 		Addr:         s.config.Server.Port,
-		Handler:      s.web,
+		Handler:      handler,
 		ReadTimeout:  time.Second * 30,
 		WriteTimeout: time.Second * 30,
 	}
