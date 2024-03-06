@@ -46,7 +46,7 @@ func NewDB(c *config.Config) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	gormDB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	gormDB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{TranslateError: true})
 	if err != nil {
 		return nil, err
 	}
