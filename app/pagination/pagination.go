@@ -8,10 +8,10 @@ const (
 )
 
 type Meta struct {
-	CurrentPage int `json:"current_page"`
-	TotalPage   int `json:"total_page"`
-	Size        int `json:"size"`
-	TotalData   int `json:"total_data"`
+	CurrentPage int   `json:"current_page"`
+	TotalPage   int   `json:"total_page"`
+	Size        int   `json:"size"`
+	TotalData   int64 `json:"total_data"`
 }
 
 type Pagination struct {

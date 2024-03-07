@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/ryanadiputraa/unclatter/app/article"
+	"github.com/ryanadiputraa/unclatter/app/pagination"
 	"github.com/ryanadiputraa/unclatter/app/validation"
 	"gorm.io/gorm"
 )
@@ -25,4 +26,22 @@ func (r *repository) Save(ctx context.Context, arg article.Article) error {
 		err = validation.NewError(validation.BadRequest, "title is already in use")
 	}
 	return err
+}
+
+func (r *repository) List(ctx context.Context, userID string, page pagination.Pagination) (articles []*article.Article, total int64, err error) {
+	r.db.Model(&article.Article{}).Count(&total)
+	err = r.db.
+		Select("id, title, article_link, created_at, updated_at").
+		Where("user_id = ?", userID).
+		Order("updated_at DESC, created_at DESC").
+		Limit(page.Limit).Offset(page.Offset).
+		Find(&articles).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		articles = []*article.Article{}
+		err = nil
+		return
+	}
+
+	return
 }
