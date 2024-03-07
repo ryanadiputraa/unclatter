@@ -3,18 +3,26 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/ryanadiputraa/unclatter/app/pagination"
 )
 
 type responseWriter struct{}
 
 type ResponseWriter interface {
 	WriteResponseData(w http.ResponseWriter, code int, data any)
+	WriteResponseDataWithPagination(w http.ResponseWriter, code int, data any, meta pagination.Meta)
 	WriteErrMessage(w http.ResponseWriter, code int, message string)
 	WriteErrDetails(w http.ResponseWriter, code int, message string, errMap map[string]string)
 }
 
 type ResponseData struct {
 	Data any `json:"data"`
+}
+
+type ResponseWithPaginationMeta struct {
+	Data any             `json:"data"`
+	Meta pagination.Meta `json:"meta"`
 }
 
 type ErrMessage struct {
@@ -39,6 +47,15 @@ func (rw *responseWriter) WriteResponseData(w http.ResponseWriter, code int, dat
 	w.WriteHeader(code)
 	json.NewEncoder(w).Encode(&ResponseData{
 		Data: data,
+	})
+}
+
+func (rw *responseWriter) WriteResponseDataWithPagination(w http.ResponseWriter, code int, data any, meta pagination.Meta) {
+	rw.setJSONHeader(w)
+	w.WriteHeader(code)
+	json.NewEncoder(w).Encode(&ResponseWithPaginationMeta{
+		Data: data,
+		Meta: meta,
 	})
 }
 
