@@ -2,8 +2,10 @@ package service
 
 import (
 	"context"
+	"math"
 
 	"github.com/ryanadiputraa/unclatter/app/article"
+	"github.com/ryanadiputraa/unclatter/app/pagination"
 	"github.com/ryanadiputraa/unclatter/pkg/logger"
 	"github.com/ryanadiputraa/unclatter/pkg/sanitizer"
 	"github.com/ryanadiputraa/unclatter/pkg/scrapper"
@@ -45,5 +47,27 @@ func (s *service) BookmarkArticle(ctx context.Context, arg article.BookmarkPaylo
 	if err = s.repository.Save(ctx, *bookmarked); err != nil {
 		return
 	}
+	return
+}
+
+func (s *service) ListBookmarkedArticles(ctx context.Context, userID string, page pagination.Pagination) (articles []*article.Article, meta *pagination.Meta, err error) {
+	articles, total, err := s.repository.List(ctx, userID, page)
+	if err != nil {
+		s.log.Error("article service: fail to fetch user's bookmarked articles", err)
+		return
+	}
+
+	totalPage := 0
+	if total > 0 {
+		totalPage = int(math.Ceil(float64(total) / float64(page.Limit)))
+	}
+
+	meta = &pagination.Meta{
+		CurrentPage: page.Offset/page.Limit + 1,
+		TotalPage:   totalPage,
+		Size:        page.Limit,
+		TotalData:   total,
+	}
+
 	return
 }

@@ -12,7 +12,6 @@ const (
 	Forbidden    = "forbidden"
 	NotFound     = "not_found"
 	ServerErr    = "server_err"
-	Timeout      = "bad_gateway"
 
 	// Oauth errror
 	InvalidCallbackParam = "invalid_callback_param"
@@ -21,12 +20,11 @@ const (
 
 var (
 	HttpErrMap = map[string]int{
-		"bad_request":  http.StatusBadRequest,
-		"unauthorized": http.StatusUnauthorized,
-		"forbidden":    http.StatusForbidden,
-		"not_found":    http.StatusNotFound,
-		"server_err":   http.StatusInternalServerError,
-		"bad_gateway":  http.StatusBadGateway,
+		BadRequest:   http.StatusBadRequest,
+		Unauthorized: http.StatusUnauthorized,
+		Forbidden:    http.StatusForbidden,
+		NotFound:     http.StatusNotFound,
+		ServerErr:    http.StatusInternalServerError,
 	}
 )
 
