@@ -29,7 +29,11 @@ func (r *repository) Save(ctx context.Context, arg article.Article) error {
 }
 
 func (r *repository) List(ctx context.Context, userID string, page pagination.Pagination) (articles []*article.Article, total int64, err error) {
-	r.db.Model(&article.Article{}).Count(&total)
+	err = r.db.Model(&article.Article{}).Count(&total).Error
+	if err != nil {
+		return
+	}
+
 	err = r.db.
 		Select("id, title, article_link, created_at, updated_at").
 		Where("user_id = ?", userID).
