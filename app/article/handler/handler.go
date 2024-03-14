@@ -28,6 +28,7 @@ func NewHandler(web *http.ServeMux, rw _http.ResponseWriter, articleService arti
 	web.Handle("GET /api/articles", authMiddleware.ParseJWTToken(h.ScrapeContent()))
 	web.Handle("POST /api/articles/bookmarks", authMiddleware.ParseJWTToken(h.BookmarkArticle()))
 	web.Handle("GET /api/articles/bookmarks", authMiddleware.ParseJWTToken(h.ListBookmarkedArticles()))
+	web.Handle("PUT /api/articles/bookmarks/{id}", authMiddleware.ParseJWTToken(h.UpdateArticle()))
 }
 
 func (h *handler) ScrapeContent() http.HandlerFunc {
@@ -97,5 +98,31 @@ func (h *handler) ListBookmarkedArticles() http.HandlerFunc {
 		}
 
 		h.rw.WriteResponseDataWithPagination(w, http.StatusOK, articles, *meta)
+	}
+}
+
+func (h *handler) UpdateArticle() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ac := r.Context().(*middleware.AuthContext)
+		id := r.PathValue("id")
+		var payload article.BookmarkPayload
+
+		json.NewDecoder(r.Body).Decode(&payload)
+		if err, errMap := h.validator.Validate(payload); err != nil {
+			h.rw.WriteErrDetails(w, http.StatusBadRequest, "invalid params", errMap)
+			return
+		}
+
+		article, err := h.articleService.UpdateArticle(ac, ac.UserID, id, payload)
+		if err != nil {
+			if vErr, ok := err.(*validation.Error); ok {
+				h.rw.WriteErrMessage(w, validation.HttpErrMap[vErr.Err], vErr.Message)
+				return
+			}
+			h.rw.WriteErrMessage(w, http.StatusInternalServerError, "internal server error")
+			return
+		}
+
+		h.rw.WriteResponseData(w, http.StatusOK, article)
 	}
 }

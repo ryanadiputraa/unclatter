@@ -47,11 +47,12 @@ type ArticleService interface {
 	ScrapeContent(ctx context.Context, url string) (string, error)
 	BookmarkArticle(ctx context.Context, arg BookmarkPayload, userID string) (*Article, error)
 	ListBookmarkedArticles(ctx context.Context, userID string, page pagination.Pagination) ([]*Article, *pagination.Meta, error)
+	UpdateArticle(ctx context.Context, userID, articleID string, arg BookmarkPayload) (*Article, error)
 }
 
 type ArticleRepository interface {
 	Save(ctx context.Context, arg Article) error
 	List(ctx context.Context, userID string, page pagination.Pagination) (articles []*Article, total int64, err error)
 	FindByID(ctx context.Context, articleID string) (*Article, error)
-	Update(ctx context.Context, arg Article) error
+	Update(ctx context.Context, arg Article) (*Article, error)
 }

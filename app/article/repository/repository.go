@@ -59,11 +59,9 @@ func (r *repository) FindByID(ctx context.Context, articleID string) (article *a
 	return
 }
 
-func (r *repository) Update(ctx context.Context, arg article.Article) error {
-	return r.db.Transaction(func(tx *gorm.DB) error {
-		var data article.Article
-
-		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&data, "id = ?", arg.ID).Error
+func (r *repository) Update(ctx context.Context, arg article.Article) (updated *article.Article, err error) {
+	err = r.db.Transaction(func(tx *gorm.DB) error {
+		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&updated, "id = ?", arg.ID).Error
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				err = validation.NewError(validation.NotFound, "no article found with given id")
@@ -71,15 +69,22 @@ func (r *repository) Update(ctx context.Context, arg article.Article) error {
 			return err
 		}
 
-		if data.UserID != arg.UserID {
+		if updated.UserID != arg.UserID {
 			return validation.NewError(validation.Forbidden, "forbidden access")
 		}
 
-		return tx.Model(&data).Updates(article.Article{
+		updated.Title = arg.Title
+		updated.Content = arg.Content
+		updated.ArticleLink = arg.ArticleLink
+		updated.UpdatedAt = arg.UpdatedAt
+
+		return tx.Model(&updated).Updates(article.Article{
 			Title:       arg.Title,
 			Content:     arg.Content,
 			ArticleLink: arg.ArticleLink,
 			UpdatedAt:   arg.UpdatedAt,
 		}).Error
 	})
+
+	return
 }

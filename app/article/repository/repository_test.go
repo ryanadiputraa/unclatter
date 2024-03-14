@@ -346,7 +346,7 @@ func TestUpdate(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			c.mockBehaviour(mock, c.arg)
-			err := r.Update(context.Background(), c.arg)
+			_, err := r.Update(context.Background(), c.arg)
 			assert.Equal(t, c.err, err)
 		})
 	}
