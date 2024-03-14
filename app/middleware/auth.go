@@ -36,7 +36,7 @@ func (m *AuthMiddleware) ParseJWTToken(next http.HandlerFunc) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authorization := r.Header.Get("Authorization")
 		if len(authorization) == 0 {
-			m.rw.WriteErrMessage(w, http.StatusForbidden, "missing Authorization header")
+			m.rw.WriteErrMessage(w, http.StatusUnauthorized, "missing Authorization header")
 			return
 		}
 

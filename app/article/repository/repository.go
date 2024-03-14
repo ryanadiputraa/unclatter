@@ -8,6 +8,7 @@ import (
 	"github.com/ryanadiputraa/unclatter/app/pagination"
 	"github.com/ryanadiputraa/unclatter/app/validation"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type repository struct {
@@ -46,6 +47,44 @@ func (r *repository) List(ctx context.Context, userID string, page pagination.Pa
 		err = nil
 		return
 	}
+
+	return
+}
+
+func (r *repository) FindByID(ctx context.Context, articleID string) (article *article.Article, err error) {
+	err = r.db.First(&article, "id = ?", articleID).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		err = validation.NewError(validation.NotFound, "no article found with given id")
+	}
+	return
+}
+
+func (r *repository) Update(ctx context.Context, arg article.Article) (updated *article.Article, err error) {
+	err = r.db.Transaction(func(tx *gorm.DB) error {
+		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&updated, "id = ?", arg.ID).Error
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				err = validation.NewError(validation.NotFound, "no article found with given id")
+			}
+			return err
+		}
+
+		if updated.UserID != arg.UserID {
+			return validation.NewError(validation.Forbidden, "forbidden access")
+		}
+
+		updated.Title = arg.Title
+		updated.Content = arg.Content
+		updated.ArticleLink = arg.ArticleLink
+		updated.UpdatedAt = arg.UpdatedAt
+
+		return tx.Model(&updated).Updates(article.Article{
+			Title:       arg.Title,
+			Content:     arg.Content,
+			ArticleLink: arg.ArticleLink,
+			UpdatedAt:   arg.UpdatedAt,
+		}).Error
+	})
 
 	return
 }

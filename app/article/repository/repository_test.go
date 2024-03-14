@@ -3,8 +3,10 @@ package repository
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/google/uuid"
 	"github.com/ryanadiputraa/unclatter/app/article"
 	"github.com/ryanadiputraa/unclatter/app/pagination"
 	"github.com/ryanadiputraa/unclatter/app/validation"
@@ -12,6 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 )
+
+const selectFromArticles = "^SELECT (.+) FROM \"articles\""
 
 func TestSave(t *testing.T) {
 	gormDB, db, mock := test.NewMockDB(t)
@@ -176,6 +180,7 @@ func TestList(t *testing.T) {
 			if err != nil {
 				assert.Zero(t, total)
 				assert.Empty(t, articles)
+				return
 			}
 
 			assert.Equal(t, c.total, total)
@@ -188,6 +193,161 @@ func TestList(t *testing.T) {
 				assert.Equal(t, c.articles[i].CreatedAt, v.CreatedAt)
 				assert.Equal(t, c.articles[i].UpdatedAt, v.UpdatedAt)
 			}
+		})
+	}
+}
+
+func TestFindByID(t *testing.T) {
+	gormDB, db, mock := test.NewMockDB(t)
+	defer db.Close()
+
+	r := NewRepository(gormDB)
+
+	cases := []struct {
+		name          string
+		articleID     string
+		mockBehaviour func(mock sqlmock.Sqlmock, articleID string)
+		article       *article.Article
+		err           error
+	}{
+		{
+			name:      "should return article with given id",
+			articleID: test.TestArticle.ID,
+			mockBehaviour: func(mock sqlmock.Sqlmock, articleID string) {
+				mock.ExpectQuery(selectFromArticles).
+					WithArgs(articleID, 1).
+					WillReturnRows(sqlmock.NewRows([]string{"id", "title", "content", "article_link", "user_id", "created_at", "updated_at"}).
+						AddRow(
+							test.TestArticle.ID, test.TestArticle.Title, test.TestArticle.Content, test.TestArticle.ArticleLink,
+							test.TestArticle.UserID, test.TestArticle.CreatedAt, test.TestArticle.UpdatedAt,
+						))
+			},
+			article: test.TestArticle,
+			err:     nil,
+		},
+		{
+			name:      "should return not found err when no record found",
+			articleID: uuid.NewString(),
+			mockBehaviour: func(mock sqlmock.Sqlmock, articleID string) {
+				mock.ExpectQuery(selectFromArticles).
+					WithArgs(articleID, 1).
+					WillReturnError(gorm.ErrRecordNotFound)
+			},
+			article: nil,
+			err:     validation.NewError(validation.NotFound, "no article found with given id"),
+		},
+		{
+			name:      "should return err when fail to query",
+			articleID: uuid.NewString(),
+			mockBehaviour: func(mock sqlmock.Sqlmock, articleID string) {
+				mock.ExpectQuery(selectFromArticles).
+					WithArgs(articleID, 1).
+					WillReturnError(gorm.ErrInvalidDB)
+			},
+			article: nil,
+			err:     gorm.ErrInvalidDB,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			c.mockBehaviour(mock, c.articleID)
+
+			article, err := r.FindByID(context.Background(), c.articleID)
+			assert.Equal(t, c.err, err)
+			if err != nil {
+				assert.Empty(t, article)
+				return
+			}
+
+			assert.Equal(t, c.article.ID, article.ID)
+			assert.Equal(t, c.article.Title, article.Title)
+			assert.Equal(t, c.article.Content, article.Content)
+			assert.Equal(t, c.article.ArticleLink, article.ArticleLink)
+			assert.Equal(t, c.article.UserID, article.UserID)
+			assert.Equal(t, c.article.CreatedAt, article.CreatedAt)
+			assert.Equal(t, c.article.UpdatedAt, article.UpdatedAt)
+		})
+	}
+}
+
+func TestUpdate(t *testing.T) {
+	gormDB, db, mock := test.NewMockDB(t)
+	defer db.Close()
+
+	r := NewRepository(gormDB)
+	newArticle := article.Article{
+		ID:          test.TestArticle.ID,
+		Title:       "New Title",
+		Content:     "<p>New Content</p>",
+		ArticleLink: "https://new.link",
+		UserID:      test.TestArticle.UserID,
+		CreatedAt:   test.TestArticle.CreatedAt,
+		UpdatedAt:   time.Now().UTC(),
+	}
+	invalidArticle := newArticle
+	invalidArticle.UserID = uuid.NewString()
+
+	cases := []struct {
+		name          string
+		mockBehaviour func(mock sqlmock.Sqlmock, arg article.Article)
+		arg           article.Article
+		err           error
+	}{
+		{
+			name: "should update bookmarked article with given id and valid user id",
+			mockBehaviour: func(mock sqlmock.Sqlmock, arg article.Article) {
+				mock.ExpectBegin()
+				mock.ExpectQuery(selectFromArticles).
+					WithArgs(arg.ID, 1).
+					WillReturnRows(sqlmock.NewRows([]string{"id", "title", "content", "article_link", "user_id", "created_at", "updated_at"}).
+						AddRow(
+							test.TestArticle.ID, test.TestArticle.Title, test.TestArticle.Content, test.TestArticle.ArticleLink,
+							test.TestArticle.UserID, test.TestArticle.CreatedAt, test.TestArticle.UpdatedAt,
+						))
+				mock.ExpectExec("^UPDATE \"articles\" SET").
+					WithArgs(arg.Title, arg.Content, arg.ArticleLink, test.AnyTime{}, arg.ID).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectCommit()
+			},
+			arg: newArticle,
+			err: nil,
+		},
+		{
+			name: "should return err when updating non existing article",
+			mockBehaviour: func(mock sqlmock.Sqlmock, arg article.Article) {
+				mock.ExpectBegin()
+				mock.ExpectQuery(selectFromArticles).
+					WithArgs(arg.ID, 1).
+					WillReturnError(gorm.ErrRecordNotFound)
+				mock.ExpectRollback()
+			},
+			arg: newArticle,
+			err: validation.NewError(validation.NotFound, "no article found with given id"),
+		},
+		{
+			name: "should return err when updating another user's bookmarked article",
+			mockBehaviour: func(mock sqlmock.Sqlmock, arg article.Article) {
+				mock.ExpectBegin()
+				mock.ExpectQuery(selectFromArticles).
+					WithArgs(arg.ID, 1).
+					WillReturnRows(sqlmock.NewRows([]string{"id", "title", "content", "article_link", "user_id", "created_at", "updated_at"}).
+						AddRow(
+							test.TestArticle.ID, test.TestArticle.Title, test.TestArticle.Content, test.TestArticle.ArticleLink,
+							test.TestArticle.UserID, test.TestArticle.CreatedAt, test.TestArticle.UpdatedAt,
+						))
+				mock.ExpectRollback()
+			},
+			arg: invalidArticle,
+			err: validation.NewError(validation.Forbidden, "forbidden access"),
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			c.mockBehaviour(mock, c.arg)
+			_, err := r.Update(context.Background(), c.arg)
+			assert.Equal(t, c.err, err)
 		})
 	}
 }

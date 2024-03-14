@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"math"
+	"time"
 
 	"github.com/ryanadiputraa/unclatter/app/article"
 	"github.com/ryanadiputraa/unclatter/app/pagination"
@@ -69,5 +70,21 @@ func (s *service) ListBookmarkedArticles(ctx context.Context, userID string, pag
 		TotalData:   total,
 	}
 
+	return
+}
+
+func (s *service) UpdateArticle(ctx context.Context, userID, articleID string, arg article.BookmarkPayload) (updated *article.Article, err error) {
+	update := article.Article{
+		ID:          articleID,
+		Title:       arg.Title,
+		Content:     arg.Content,
+		ArticleLink: arg.ArticleLink,
+		UserID:      userID,
+		UpdatedAt:   time.Now().UTC(),
+	}
+	updated, err = s.repository.Update(ctx, update)
+	if err != nil {
+		s.log.Warn("article service: fail to update bookmarked article", err)
+	}
 	return
 }

@@ -2,6 +2,7 @@ package test
 
 import (
 	"database/sql"
+	"database/sql/driver"
 	"testing"
 	"time"
 
@@ -69,9 +70,17 @@ func NewMockDB(t *testing.T) (*gorm.DB, *sql.DB, sqlmock.Sqlmock) {
 			Conn:       db,
 			DriverName: "postgres",
 		},
-	), &gorm.Config{})
+	), &gorm.Config{TranslateError: true})
 	if err != nil {
 		t.Fatal("fail to open db conn: ", err.Error())
 	}
 	return gormDB, db, mock
+}
+
+type AnyTime struct{}
+
+// Match satisfies sqlmock.Argument interface
+func (a AnyTime) Match(v driver.Value) bool {
+	_, ok := v.(time.Time)
+	return ok
 }
