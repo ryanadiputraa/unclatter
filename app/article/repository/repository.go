@@ -8,6 +8,7 @@ import (
 	"github.com/ryanadiputraa/unclatter/app/pagination"
 	"github.com/ryanadiputraa/unclatter/app/validation"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type repository struct {
@@ -56,4 +57,29 @@ func (r *repository) FindByID(ctx context.Context, articleID string) (article *a
 		err = validation.NewError(validation.NotFound, "no article found with given id")
 	}
 	return
+}
+
+func (r *repository) Update(ctx context.Context, userID, articleID string, arg article.Article) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		var data article.Article
+
+		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&data, "id = ?", articleID).Error
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				err = validation.NewError(validation.NotFound, "no article found with given id")
+			}
+			return err
+		}
+
+		if data.UserID != userID {
+			return validation.NewError(validation.Forbidden, "forbidden access")
+		}
+
+		return tx.Model(&data).Updates(article.Article{
+			Title:       arg.Title,
+			Content:     arg.Content,
+			ArticleLink: arg.ArticleLink,
+			UpdatedAt:   arg.UpdatedAt,
+		}).Error
+	})
 }

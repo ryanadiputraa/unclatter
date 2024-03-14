@@ -17,6 +17,36 @@ type ArticleRepository struct {
 	mock.Mock
 }
 
+// FindByID provides a mock function with given fields: ctx, articleID
+func (_m *ArticleRepository) FindByID(ctx context.Context, articleID string) (*article.Article, error) {
+	ret := _m.Called(ctx, articleID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindByID")
+	}
+
+	var r0 *article.Article
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*article.Article, error)); ok {
+		return rf(ctx, articleID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *article.Article); ok {
+		r0 = rf(ctx, articleID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*article.Article)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, articleID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // List provides a mock function with given fields: ctx, userID, page
 func (_m *ArticleRepository) List(ctx context.Context, userID string, page pagination.Pagination) ([]*article.Article, int64, error) {
 	ret := _m.Called(ctx, userID, page)
@@ -65,6 +95,24 @@ func (_m *ArticleRepository) Save(ctx context.Context, arg article.Article) erro
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, article.Article) error); ok {
 		r0 = rf(ctx, arg)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Update provides a mock function with given fields: ctx, userID, articleID, arg
+func (_m *ArticleRepository) Update(ctx context.Context, userID string, articleID string, arg article.Article) error {
+	ret := _m.Called(ctx, userID, articleID, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Update")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, article.Article) error); ok {
+		r0 = rf(ctx, userID, articleID, arg)
 	} else {
 		r0 = ret.Error(0)
 	}

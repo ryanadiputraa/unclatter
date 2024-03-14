@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
@@ -13,6 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 )
+
+const selectFromArticles = "^SELECT (.+) FROM \"articles\""
 
 func TestSave(t *testing.T) {
 	gormDB, db, mock := test.NewMockDB(t)
@@ -199,7 +202,6 @@ func TestFindByID(t *testing.T) {
 	defer db.Close()
 
 	r := NewRepository(gormDB)
-	expectedQuery := "^SELECT (.+) FROM \"articles\""
 
 	cases := []struct {
 		name          string
@@ -212,7 +214,7 @@ func TestFindByID(t *testing.T) {
 			name:      "should return article with given id",
 			articleID: test.TestArticle.ID,
 			mockBehaviour: func(mock sqlmock.Sqlmock, articleID string) {
-				mock.ExpectQuery(expectedQuery).
+				mock.ExpectQuery(selectFromArticles).
 					WithArgs(articleID, 1).
 					WillReturnRows(sqlmock.NewRows([]string{"id", "title", "content", "article_link", "user_id", "created_at", "updated_at"}).
 						AddRow(
@@ -227,7 +229,7 @@ func TestFindByID(t *testing.T) {
 			name:      "should return not found err when no record found",
 			articleID: uuid.NewString(),
 			mockBehaviour: func(mock sqlmock.Sqlmock, articleID string) {
-				mock.ExpectQuery(expectedQuery).
+				mock.ExpectQuery(selectFromArticles).
 					WithArgs(articleID, 1).
 					WillReturnError(gorm.ErrRecordNotFound)
 			},
@@ -238,7 +240,7 @@ func TestFindByID(t *testing.T) {
 			name:      "should return err when fail to query",
 			articleID: uuid.NewString(),
 			mockBehaviour: func(mock sqlmock.Sqlmock, articleID string) {
-				mock.ExpectQuery(expectedQuery).
+				mock.ExpectQuery(selectFromArticles).
 					WithArgs(articleID, 1).
 					WillReturnError(gorm.ErrInvalidDB)
 			},
@@ -265,6 +267,93 @@ func TestFindByID(t *testing.T) {
 			assert.Equal(t, c.article.UserID, article.UserID)
 			assert.Equal(t, c.article.CreatedAt, article.CreatedAt)
 			assert.Equal(t, c.article.UpdatedAt, article.UpdatedAt)
+		})
+	}
+}
+
+func TestUpdate(t *testing.T) {
+	gormDB, db, mock := test.NewMockDB(t)
+	defer db.Close()
+
+	r := NewRepository(gormDB)
+	newArticle := article.Article{
+		ID:          test.TestArticle.ID,
+		Title:       "New Title",
+		Content:     "<p>New Content</p>",
+		ArticleLink: "https://new.link",
+		UserID:      test.TestArticle.UserID,
+		CreatedAt:   test.TestArticle.CreatedAt,
+		UpdatedAt:   time.Now().UTC(),
+	}
+
+	cases := []struct {
+		name          string
+		mockBehaviour func(mock sqlmock.Sqlmock, userID, articleID string, arg article.Article)
+		userID        string
+		articleID     string
+		arg           article.Article
+		err           error
+	}{
+		{
+			name: "should update bookmarked article with given id and valid user id",
+			mockBehaviour: func(mock sqlmock.Sqlmock, userID, articleID string, arg article.Article) {
+				mock.ExpectBegin()
+				mock.ExpectQuery(selectFromArticles).
+					WithArgs(articleID, 1).
+					WillReturnRows(sqlmock.NewRows([]string{"id", "title", "content", "article_link", "user_id", "created_at", "updated_at"}).
+						AddRow(
+							test.TestArticle.ID, test.TestArticle.Title, test.TestArticle.Content, test.TestArticle.ArticleLink,
+							test.TestArticle.UserID, test.TestArticle.CreatedAt, test.TestArticle.UpdatedAt,
+						))
+				mock.ExpectExec("^UPDATE \"articles\" SET").
+					WithArgs(arg.Title, arg.Content, arg.ArticleLink, test.AnyTime{}, articleID).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectCommit()
+			},
+			userID:    test.TestArticle.UserID,
+			articleID: test.TestArticle.ID,
+			arg:       newArticle,
+			err:       nil,
+		},
+		{
+			name: "should return err when updating non existing article",
+			mockBehaviour: func(mock sqlmock.Sqlmock, userID, articleID string, arg article.Article) {
+				mock.ExpectBegin()
+				mock.ExpectQuery(selectFromArticles).
+					WithArgs(articleID, 1).
+					WillReturnError(gorm.ErrRecordNotFound)
+				mock.ExpectRollback()
+			},
+			userID:    uuid.NewString(),
+			articleID: test.TestArticle.ID,
+			arg:       newArticle,
+			err:       validation.NewError(validation.NotFound, "no article found with given id"),
+		},
+		{
+			name: "should return err when updating another user's bookmarked article",
+			mockBehaviour: func(mock sqlmock.Sqlmock, userID, articleID string, arg article.Article) {
+				mock.ExpectBegin()
+				mock.ExpectQuery(selectFromArticles).
+					WithArgs(articleID, 1).
+					WillReturnRows(sqlmock.NewRows([]string{"id", "title", "content", "article_link", "user_id", "created_at", "updated_at"}).
+						AddRow(
+							test.TestArticle.ID, test.TestArticle.Title, test.TestArticle.Content, test.TestArticle.ArticleLink,
+							test.TestArticle.UserID, test.TestArticle.CreatedAt, test.TestArticle.UpdatedAt,
+						))
+				mock.ExpectRollback()
+			},
+			userID:    uuid.NewString(),
+			articleID: test.TestArticle.ID,
+			arg:       newArticle,
+			err:       validation.NewError(validation.Forbidden, "forbidden access"),
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			c.mockBehaviour(mock, c.userID, c.articleID, c.arg)
+			err := r.Update(context.Background(), c.userID, c.articleID, c.arg)
+			assert.Equal(t, c.err, err)
 		})
 	}
 }
