@@ -52,4 +52,5 @@ type ArticleService interface {
 type ArticleRepository interface {
 	Save(ctx context.Context, arg Article) error
 	List(ctx context.Context, userID string, page pagination.Pagination) (articles []*Article, total int64, err error)
+	FindByID(ctx context.Context, articleID string) (*Article, error)
 }

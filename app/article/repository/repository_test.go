@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/google/uuid"
 	"github.com/ryanadiputraa/unclatter/app/article"
 	"github.com/ryanadiputraa/unclatter/app/pagination"
 	"github.com/ryanadiputraa/unclatter/app/validation"
@@ -176,6 +177,7 @@ func TestList(t *testing.T) {
 			if err != nil {
 				assert.Zero(t, total)
 				assert.Empty(t, articles)
+				return
 			}
 
 			assert.Equal(t, c.total, total)
@@ -188,6 +190,81 @@ func TestList(t *testing.T) {
 				assert.Equal(t, c.articles[i].CreatedAt, v.CreatedAt)
 				assert.Equal(t, c.articles[i].UpdatedAt, v.UpdatedAt)
 			}
+		})
+	}
+}
+
+func TestFindByID(t *testing.T) {
+	gormDB, db, mock := test.NewMockDB(t)
+	defer db.Close()
+
+	r := NewRepository(gormDB)
+	expectedQuery := "^SELECT (.+) FROM \"articles\""
+
+	cases := []struct {
+		name          string
+		articleID     string
+		mockBehaviour func(mock sqlmock.Sqlmock, articleID string)
+		article       *article.Article
+		err           error
+	}{
+		{
+			name:      "should return article with given id",
+			articleID: test.TestArticle.ID,
+			mockBehaviour: func(mock sqlmock.Sqlmock, articleID string) {
+				mock.ExpectQuery(expectedQuery).
+					WithArgs(articleID, 1).
+					WillReturnRows(sqlmock.NewRows([]string{"id", "title", "content", "article_link", "user_id", "created_at", "updated_at"}).
+						AddRow(
+							test.TestArticle.ID, test.TestArticle.Title, test.TestArticle.Content, test.TestArticle.ArticleLink,
+							test.TestArticle.UserID, test.TestArticle.CreatedAt, test.TestArticle.UpdatedAt,
+						))
+			},
+			article: test.TestArticle,
+			err:     nil,
+		},
+		{
+			name:      "should return not found err when no record found",
+			articleID: uuid.NewString(),
+			mockBehaviour: func(mock sqlmock.Sqlmock, articleID string) {
+				mock.ExpectQuery(expectedQuery).
+					WithArgs(articleID, 1).
+					WillReturnError(gorm.ErrRecordNotFound)
+			},
+			article: nil,
+			err:     validation.NewError(validation.NotFound, "no article found with given id"),
+		},
+		{
+			name:      "should return err when fail to query",
+			articleID: uuid.NewString(),
+			mockBehaviour: func(mock sqlmock.Sqlmock, articleID string) {
+				mock.ExpectQuery(expectedQuery).
+					WithArgs(articleID, 1).
+					WillReturnError(gorm.ErrInvalidDB)
+			},
+			article: nil,
+			err:     gorm.ErrInvalidDB,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			c.mockBehaviour(mock, c.articleID)
+
+			article, err := r.FindByID(context.Background(), c.articleID)
+			assert.Equal(t, c.err, err)
+			if err != nil {
+				assert.Empty(t, article)
+				return
+			}
+
+			assert.Equal(t, c.article.ID, article.ID)
+			assert.Equal(t, c.article.Title, article.Title)
+			assert.Equal(t, c.article.Content, article.Content)
+			assert.Equal(t, c.article.ArticleLink, article.ArticleLink)
+			assert.Equal(t, c.article.UserID, article.UserID)
+			assert.Equal(t, c.article.CreatedAt, article.CreatedAt)
+			assert.Equal(t, c.article.UpdatedAt, article.UpdatedAt)
 		})
 	}
 }

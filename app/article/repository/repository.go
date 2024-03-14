@@ -49,3 +49,11 @@ func (r *repository) List(ctx context.Context, userID string, page pagination.Pa
 
 	return
 }
+
+func (r *repository) FindByID(ctx context.Context, articleID string) (article *article.Article, err error) {
+	err = r.db.First(&article, "id = ?", articleID).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		err = validation.NewError(validation.NotFound, "no article found with given id")
+	}
+	return
+}
