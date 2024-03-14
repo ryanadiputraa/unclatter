@@ -102,17 +102,17 @@ func (_m *ArticleRepository) Save(ctx context.Context, arg article.Article) erro
 	return r0
 }
 
-// Update provides a mock function with given fields: ctx, userID, articleID, arg
-func (_m *ArticleRepository) Update(ctx context.Context, userID string, articleID string, arg article.Article) error {
-	ret := _m.Called(ctx, userID, articleID, arg)
+// Update provides a mock function with given fields: ctx, arg
+func (_m *ArticleRepository) Update(ctx context.Context, arg article.Article) error {
+	ret := _m.Called(ctx, arg)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, article.Article) error); ok {
-		r0 = rf(ctx, userID, articleID, arg)
+	if rf, ok := ret.Get(0).(func(context.Context, article.Article) error); ok {
+		r0 = rf(ctx, arg)
 	} else {
 		r0 = ret.Error(0)
 	}

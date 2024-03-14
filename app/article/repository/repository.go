@@ -59,11 +59,11 @@ func (r *repository) FindByID(ctx context.Context, articleID string) (article *a
 	return
 }
 
-func (r *repository) Update(ctx context.Context, userID, articleID string, arg article.Article) error {
+func (r *repository) Update(ctx context.Context, arg article.Article) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		var data article.Article
 
-		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&data, "id = ?", articleID).Error
+		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&data, "id = ?", arg.ID).Error
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				err = validation.NewError(validation.NotFound, "no article found with given id")
@@ -71,7 +71,7 @@ func (r *repository) Update(ctx context.Context, userID, articleID string, arg a
 			return err
 		}
 
-		if data.UserID != userID {
+		if data.UserID != arg.UserID {
 			return validation.NewError(validation.Forbidden, "forbidden access")
 		}
 
