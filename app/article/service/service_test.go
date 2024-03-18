@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/ryanadiputraa/unclatter/app/article"
 	"github.com/ryanadiputraa/unclatter/app/mocks"
+	"github.com/ryanadiputraa/unclatter/app/pagination"
 	"github.com/ryanadiputraa/unclatter/app/validation"
 	"github.com/ryanadiputraa/unclatter/pkg/logger"
 	"github.com/ryanadiputraa/unclatter/pkg/sanitizer"
@@ -15,6 +16,7 @@ import (
 	"github.com/ryanadiputraa/unclatter/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"gorm.io/gorm"
 )
 
 func TestBookmark(t *testing.T) {
@@ -96,4 +98,114 @@ func TestBookmark(t *testing.T) {
 	}
 }
 
-// TODO: test list & update
+func TestListArticle(t *testing.T) {
+	cases := []struct {
+		name              string
+		userID            string
+		page              pagination.Pagination
+		expected          []*article.Article
+		meta              *pagination.Meta
+		err               error
+		mockRepoBehaviour func(mockRepo *mocks.ArticleRepository, userID string, page pagination.Pagination)
+	}{
+		{
+			name:   "should return list of user's bookmarked articles",
+			userID: test.TestUser.ID,
+			page: pagination.Pagination{
+				Limit:  2,
+				Offset: 0,
+			},
+			expected: []*article.Article{
+				test.TestArticle,
+				test.TestArticle2,
+				test.TestArticle3,
+			},
+			meta: &pagination.Meta{
+				CurrentPage: 1,
+				TotalPages:  2,
+				Size:        2,
+				TotalData:   3,
+			},
+			err: nil,
+			mockRepoBehaviour: func(mockRepo *mocks.ArticleRepository, userID string, page pagination.Pagination) {
+				mockRepo.On("List", context.Background(), userID, page).
+					Return(
+						[]*article.Article{test.TestArticle, test.TestArticle2, test.TestArticle3},
+						int64(3),
+						nil,
+					)
+			},
+		},
+		{
+			name:   "should return empty list of user's bookmarked articles",
+			userID: test.TestUser.ID,
+			page: pagination.Pagination{
+				Limit:  2,
+				Offset: 0,
+			},
+			expected: []*article.Article{},
+			meta: &pagination.Meta{
+				CurrentPage: 1,
+				TotalPages:  0,
+				Size:        2,
+				TotalData:   0,
+			},
+			err: nil,
+			mockRepoBehaviour: func(mockRepo *mocks.ArticleRepository, userID string, page pagination.Pagination) {
+				mockRepo.On("List", context.Background(), userID, page).
+					Return(
+						[]*article.Article{},
+						int64(0),
+						nil,
+					)
+			},
+		},
+		{
+			name:   "should return err when fail to fetch user's bookmarked articles",
+			userID: test.TestUser.ID,
+			page: pagination.Pagination{
+				Limit:  2,
+				Offset: 0,
+			},
+			expected: []*article.Article{},
+			meta:     &pagination.Meta{},
+			err:      gorm.ErrInvalidDB,
+			mockRepoBehaviour: func(mockRepo *mocks.ArticleRepository, userID string, page pagination.Pagination) {
+				mockRepo.On("List", context.Background(), userID, page).Return(nil, int64(0), gorm.ErrInvalidDB)
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			r := new(mocks.ArticleRepository)
+			c.mockRepoBehaviour(r, c.userID, c.page)
+
+			s := NewService(logger.NewLogger(), scrapper.NewScrapper(), sanitizer.NewSanitizer(), r)
+			articles, meta, err := s.ListBookmarkedArticles(context.Background(), c.userID, c.page)
+
+			assert.Equal(t, c.err, err)
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, len(c.expected), len(articles))
+			for i, article := range articles {
+				assert.Equal(t, c.expected[i].ID, article.ID)
+				assert.Equal(t, c.expected[i].Title, article.Title)
+				assert.Equal(t, c.expected[i].Content, article.Content)
+				assert.Equal(t, c.expected[i].ArticleLink, article.ArticleLink)
+				assert.Equal(t, c.expected[i].UserID, article.UserID)
+				assert.NotEmpty(t, article.CreatedAt)
+				assert.NotEmpty(t, article.UpdatedAt)
+			}
+
+			assert.Equal(t, c.meta.CurrentPage, meta.CurrentPage)
+			assert.Equal(t, c.meta.TotalPages, meta.TotalPages)
+			assert.Equal(t, c.meta.Size, meta.Size)
+			assert.Equal(t, c.meta.TotalData, meta.TotalData)
+		})
+	}
+}
+
+// TODO: test update

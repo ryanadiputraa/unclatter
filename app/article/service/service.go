@@ -58,14 +58,14 @@ func (s *service) ListBookmarkedArticles(ctx context.Context, userID string, pag
 		return
 	}
 
-	totalPage := 0
+	totalPages := 0
 	if total > 0 {
-		totalPage = int(math.Ceil(float64(total) / float64(page.Limit)))
+		totalPages = int(math.Ceil(float64(total) / float64(page.Limit)))
 	}
 
 	meta = &pagination.Meta{
 		CurrentPage: page.Offset/page.Limit + 1,
-		TotalPage:   totalPage,
+		TotalPages:  totalPages,
 		Size:        page.Limit,
 		TotalData:   total,
 	}

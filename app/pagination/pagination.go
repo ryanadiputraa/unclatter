@@ -9,7 +9,7 @@ const (
 
 type Meta struct {
 	CurrentPage int   `json:"current_page"`
-	TotalPage   int   `json:"total_page"`
+	TotalPages  int   `json:"total_pages"`
 	Size        int   `json:"size"`
 	TotalData   int64 `json:"total_data"`
 }
