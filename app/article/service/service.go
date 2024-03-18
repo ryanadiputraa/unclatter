@@ -34,6 +34,7 @@ func (s *service) ScrapeContent(ctx context.Context, url string) (content string
 		s.log.Warn("article service: fail to scrape page", err)
 		return
 	}
+
 	return
 }
 

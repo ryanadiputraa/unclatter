@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gocolly/colly/v2"
 	"github.com/google/uuid"
 	"github.com/ryanadiputraa/unclatter/app/article"
 	"github.com/ryanadiputraa/unclatter/app/mocks"
@@ -18,6 +19,49 @@ import (
 	"github.com/stretchr/testify/mock"
 	"gorm.io/gorm"
 )
+
+func TestScrapeContent(t *testing.T) {
+	cases := []struct {
+		name                  string
+		url                   string
+		expected              string
+		err                   error
+		mockScrapperBehaviour func(mockScrapper *mocks.Scrapper, url string)
+	}{
+		{
+			name:     "should return scrapped article content",
+			url:      test.TestArticle.ArticleLink,
+			expected: test.TestArticle.Content,
+			err:      nil,
+			mockScrapperBehaviour: func(mockScrapper *mocks.Scrapper, url string) {
+				mockScrapper.On("ScrapeTextContent", url).Return(test.TestArticle.Content, nil)
+			},
+		},
+		{
+			name:     "should return err when fail to scrape article content",
+			url:      test.TestArticle.ArticleLink,
+			expected: "",
+			err:      colly.ErrForbiddenURL,
+			mockScrapperBehaviour: func(mockScrapper *mocks.Scrapper, url string) {
+				mockScrapper.On("ScrapeTextContent", url).Return("", colly.ErrForbiddenURL)
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			scrapperPkg := new(mocks.Scrapper)
+			c.mockScrapperBehaviour(scrapperPkg, c.url)
+
+			r := new(mocks.ArticleRepository)
+			s := NewService(logger.NewLogger(), scrapperPkg, sanitizer.NewSanitizer(), r)
+			content, err := s.ScrapeContent(context.Background(), c.url)
+
+			assert.Equal(t, c.err, err)
+			assert.Equal(t, c.expected, content)
+		})
+	}
+}
 
 func TestBookmark(t *testing.T) {
 	articleID := uuid.NewString()
