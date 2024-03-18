@@ -7,6 +7,7 @@ import (
 
 	"github.com/ryanadiputraa/unclatter/app/article"
 	"github.com/ryanadiputraa/unclatter/app/pagination"
+	"github.com/ryanadiputraa/unclatter/app/validation"
 	"github.com/ryanadiputraa/unclatter/pkg/logger"
 	"github.com/ryanadiputraa/unclatter/pkg/sanitizer"
 	"github.com/ryanadiputraa/unclatter/pkg/scrapper"
@@ -34,6 +35,11 @@ func (s *service) ScrapeContent(ctx context.Context, url string) (content string
 		s.log.Warn("article service: fail to scrape page", err)
 		return
 	}
+
+	if content == "" {
+		err = validation.NewError(validation.BadRequest, "fail to scrape any article content")
+	}
+
 	return
 }
 
@@ -58,14 +64,14 @@ func (s *service) ListBookmarkedArticles(ctx context.Context, userID string, pag
 		return
 	}
 
-	totalPage := 0
+	totalPages := 0
 	if total > 0 {
-		totalPage = int(math.Ceil(float64(total) / float64(page.Limit)))
+		totalPages = int(math.Ceil(float64(total) / float64(page.Limit)))
 	}
 
 	meta = &pagination.Meta{
 		CurrentPage: page.Offset/page.Limit + 1,
-		TotalPage:   totalPage,
+		TotalPages:  totalPages,
 		Size:        page.Limit,
 		TotalData:   total,
 	}
