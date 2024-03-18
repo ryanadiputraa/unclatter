@@ -41,6 +41,15 @@ func TestScrapeContent(t *testing.T) {
 			name:     "should return err when fail to scrape article content",
 			url:      test.TestArticle.ArticleLink,
 			expected: "",
+			err:      validation.NewError(validation.BadRequest, "fail to scrape any article content"),
+			mockScrapperBehaviour: func(mockScrapper *mocks.Scrapper, url string) {
+				mockScrapper.On("ScrapeTextContent", url).Return("", nil)
+			},
+		},
+		{
+			name:     "should return err when fail to scrape article content",
+			url:      test.TestArticle.ArticleLink,
+			expected: "",
 			err:      colly.ErrForbiddenURL,
 			mockScrapperBehaviour: func(mockScrapper *mocks.Scrapper, url string) {
 				mockScrapper.On("ScrapeTextContent", url).Return("", colly.ErrForbiddenURL)

@@ -7,6 +7,7 @@ import (
 
 	"github.com/ryanadiputraa/unclatter/app/article"
 	"github.com/ryanadiputraa/unclatter/app/pagination"
+	"github.com/ryanadiputraa/unclatter/app/validation"
 	"github.com/ryanadiputraa/unclatter/pkg/logger"
 	"github.com/ryanadiputraa/unclatter/pkg/sanitizer"
 	"github.com/ryanadiputraa/unclatter/pkg/scrapper"
@@ -33,6 +34,10 @@ func (s *service) ScrapeContent(ctx context.Context, url string) (content string
 	if err != nil {
 		s.log.Warn("article service: fail to scrape page", err)
 		return
+	}
+
+	if content == "" {
+		err = validation.NewError(validation.BadRequest, "fail to scrape any article content")
 	}
 
 	return
