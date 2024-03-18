@@ -168,7 +168,7 @@ func TestListArticle(t *testing.T) {
 				Offset: 0,
 			},
 			expected: []*article.Article{},
-			meta:     &pagination.Meta{},
+			meta:     nil,
 			err:      gorm.ErrInvalidDB,
 			mockRepoBehaviour: func(mockRepo *mocks.ArticleRepository, userID string, page pagination.Pagination) {
 				mockRepo.On("List", context.Background(), userID, page).Return(nil, int64(0), gorm.ErrInvalidDB)
@@ -208,4 +208,88 @@ func TestListArticle(t *testing.T) {
 	}
 }
 
-// TODO: test update
+func TestUpdateArticle(t *testing.T) {
+	updatePayload := article.BookmarkPayload{
+		Title:       "Updated Title",
+		Content:     "<p>Updated Content</p>",
+		ArticleLink: "https://newlink.com",
+	}
+	updatedTime := time.Now().UTC()
+
+	cases := []struct {
+		name              string
+		userID            string
+		articleID         string
+		arg               article.BookmarkPayload
+		expected          *article.Article
+		err               error
+		mockRepoBehaviour func(mockRepo *mocks.ArticleRepository)
+	}{
+		{
+			name:      "should return updated article",
+			userID:    test.TestArticle.UserID,
+			articleID: test.TestArticle.ID,
+			arg:       updatePayload,
+			expected: &article.Article{
+				ID:          test.TestArticle.ID,
+				Title:       updatePayload.Title,
+				Content:     updatePayload.Content,
+				ArticleLink: updatePayload.ArticleLink,
+				UserID:      test.TestArticle.UserID,
+				CreatedAt:   test.TestArticle.CreatedAt,
+				UpdatedAt:   updatedTime,
+			},
+			err: nil,
+			mockRepoBehaviour: func(mockRepo *mocks.ArticleRepository) {
+				mockRepo.On("Update", context.Background(), mock.Anything).
+					Return(
+						&article.Article{
+							ID:          test.TestArticle.ID,
+							Title:       updatePayload.Title,
+							Content:     updatePayload.Content,
+							ArticleLink: updatePayload.ArticleLink,
+							UserID:      test.TestArticle.UserID,
+							CreatedAt:   test.TestArticle.CreatedAt,
+							UpdatedAt:   updatedTime,
+						},
+						nil,
+					)
+			},
+		},
+		{
+			name:      "should return err when fail to update article",
+			userID:    test.TestArticle.UserID,
+			articleID: test.TestArticle.ID,
+			arg:       updatePayload,
+			expected:  nil,
+			err:       validation.NewError(validation.Forbidden, "forbidden access"),
+			mockRepoBehaviour: func(mockRepo *mocks.ArticleRepository) {
+				mockRepo.On("Update", context.Background(), mock.Anything).
+					Return(nil, validation.NewError(validation.Forbidden, "forbidden access"))
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			r := new(mocks.ArticleRepository)
+			c.mockRepoBehaviour(r)
+
+			s := NewService(logger.NewLogger(), scrapper.NewScrapper(), sanitizer.NewSanitizer(), r)
+			article, err := s.UpdateArticle(context.Background(), c.userID, c.articleID, c.arg)
+
+			assert.Equal(t, c.err, err)
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, c.expected.ID, article.ID)
+			assert.Equal(t, c.expected.Title, article.Title)
+			assert.Equal(t, c.expected.Content, article.Content)
+			assert.Equal(t, c.expected.ArticleLink, article.ArticleLink)
+			assert.Equal(t, c.expected.UserID, article.UserID)
+			assert.NotEmpty(t, article.CreatedAt)
+			assert.NotEmpty(t, article.UpdatedAt)
+		})
+	}
+}
