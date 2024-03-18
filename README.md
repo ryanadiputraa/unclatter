@@ -4,6 +4,12 @@ UnClatter is an article bookmarking tool that also removes distractions like ads
 
 ## Development 🧑🏻‍💻
 
+Setup development database or use [docker compose](https://docs.docker.com/compose/) and start services
+
+```bash
+make compose-up
+```
+
 Adjust your `config/config.yml` for development server
 
 ```bash
