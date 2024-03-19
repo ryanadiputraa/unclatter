@@ -47,6 +47,7 @@ type ArticleService interface {
 	ScrapeContent(ctx context.Context, url string) (string, error)
 	BookmarkArticle(ctx context.Context, arg BookmarkPayload, userID string) (*Article, error)
 	ListBookmarkedArticles(ctx context.Context, userID string, page pagination.Pagination) ([]*Article, *pagination.Meta, error)
+	GetBookmarkedArticle(ctx context.Context, userID, articleID string) (*Article, error)
 	UpdateArticle(ctx context.Context, userID, articleID string, arg BookmarkPayload) (*Article, error)
 }
 

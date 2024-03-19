@@ -79,6 +79,20 @@ func (s *service) ListBookmarkedArticles(ctx context.Context, userID string, pag
 	return
 }
 
+func (s *service) GetBookmarkedArticle(ctx context.Context, userID, articleID string) (article *article.Article, err error) {
+	article, err = s.repository.FindByID(ctx, articleID)
+	if err != nil {
+		s.log.Warn("article service: fail to fetch article ", articleID, " ", err)
+		return
+	}
+
+	if article.UserID != userID {
+		err = validation.NewError(validation.Forbidden, "forbidden access")
+		return
+	}
+	return
+}
+
 func (s *service) UpdateArticle(ctx context.Context, userID, articleID string, arg article.BookmarkPayload) (updated *article.Article, err error) {
 	update := article.Article{
 		ID:          articleID,

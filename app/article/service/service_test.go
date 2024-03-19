@@ -261,6 +261,75 @@ func TestListArticle(t *testing.T) {
 	}
 }
 
+func TestGetArticle(t *testing.T) {
+	cases := []struct {
+		name              string
+		userID            string
+		articleID         string
+		expected          *article.Article
+		err               error
+		mockRepoBehaviour func(mockRepo *mocks.ArticleRepository, articleID string)
+	}{
+		{
+			name:      "should return bookmarked article with given id",
+			userID:    test.TestArticle.UserID,
+			articleID: test.TestArticle.ID,
+			expected:  test.TestArticle,
+			err:       nil,
+			mockRepoBehaviour: func(mockRepo *mocks.ArticleRepository, articleID string) {
+				mockRepo.On("FindByID", context.Background(), articleID).
+					Return(test.TestArticle, nil)
+			},
+		},
+		{
+			name:      "should return err when accessing other user's bookmarked article",
+			userID:    uuid.NewString(),
+			articleID: test.TestArticle.ID,
+			expected:  test.TestArticle,
+			err:       validation.NewError(validation.Forbidden, "forbidden access"),
+			mockRepoBehaviour: func(mockRepo *mocks.ArticleRepository, articleID string) {
+				mockRepo.On("FindByID", context.Background(), articleID).
+					Return(test.TestArticle, nil)
+			},
+		},
+		{
+			name:      "should return err when fail to fetch bookmarked article with given id",
+			userID:    test.TestUser.ID,
+			articleID: uuid.NewString(),
+			expected:  nil,
+			err:       validation.NewError(validation.NotFound, "no article found with given id"),
+			mockRepoBehaviour: func(mockRepo *mocks.ArticleRepository, articleID string) {
+				mockRepo.On("FindByID", context.Background(), articleID).
+					Return(nil, validation.NewError(validation.NotFound, "no article found with given id"))
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			r := new(mocks.ArticleRepository)
+			c.mockRepoBehaviour(r, c.articleID)
+
+			s := NewService(logger.NewLogger(), scrapper.NewScrapper(), sanitizer.NewSanitizer(), r)
+			article, err := s.GetBookmarkedArticle(context.Background(), c.userID, c.articleID)
+
+			assert.Equal(t, c.err, err)
+			if err != nil {
+				assert.Equal(t, c.expected, c.expected)
+				return
+			}
+
+			assert.Equal(t, c.expected.ID, article.ID)
+			assert.Equal(t, c.expected.Title, article.Title)
+			assert.Equal(t, c.expected.Content, article.Content)
+			assert.Equal(t, c.expected.ArticleLink, article.ArticleLink)
+			assert.Equal(t, c.expected.UserID, article.UserID)
+			assert.NotEmpty(t, article.CreatedAt)
+			assert.NotEmpty(t, article.UpdatedAt)
+		})
+	}
+}
+
 func TestUpdateArticle(t *testing.T) {
 	updatePayload := article.BookmarkPayload{
 		Title:       "Updated Title",
