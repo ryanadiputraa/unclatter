@@ -88,3 +88,11 @@ func (r *repository) Update(ctx context.Context, arg article.Article) (updated *
 
 	return
 }
+
+func (r *repository) Delete(ctx context.Context, userID, articleID string) error {
+	res := r.db.Where("id = ? AND user_id = ?", articleID, userID).Delete(&article.Article{})
+	if res.RowsAffected == 0 && res.Error == nil {
+		return validation.NewError(validation.BadRequest, "fail to delete article")
+	}
+	return res.Error
+}

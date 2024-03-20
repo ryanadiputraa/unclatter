@@ -56,4 +56,5 @@ type ArticleRepository interface {
 	List(ctx context.Context, userID string, page pagination.Pagination) (articles []*Article, total int64, err error)
 	FindByID(ctx context.Context, articleID string) (*Article, error)
 	Update(ctx context.Context, arg Article) (*Article, error)
+	Delete(ctx context.Context, userID, articleID string) error
 }
