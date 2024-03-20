@@ -20,6 +20,10 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	forbiddenAccess = "forbidden access"
+)
+
 func TestScrapeContent(t *testing.T) {
 	cases := []struct {
 		name                  string
@@ -286,7 +290,7 @@ func TestGetArticle(t *testing.T) {
 			userID:    uuid.NewString(),
 			articleID: test.TestArticle.ID,
 			expected:  test.TestArticle,
-			err:       validation.NewError(validation.Forbidden, "forbidden access"),
+			err:       validation.NewError(validation.Forbidden, forbiddenAccess),
 			mockRepoBehaviour: func(mockRepo *mocks.ArticleRepository, articleID string) {
 				mockRepo.On("FindByID", context.Background(), articleID).
 					Return(test.TestArticle, nil)
@@ -384,10 +388,10 @@ func TestUpdateArticle(t *testing.T) {
 			articleID: test.TestArticle.ID,
 			arg:       updatePayload,
 			expected:  nil,
-			err:       validation.NewError(validation.Forbidden, "forbidden access"),
+			err:       validation.NewError(validation.Forbidden, forbiddenAccess),
 			mockRepoBehaviour: func(mockRepo *mocks.ArticleRepository) {
 				mockRepo.On("Update", context.Background(), mock.Anything).
-					Return(nil, validation.NewError(validation.Forbidden, "forbidden access"))
+					Return(nil, validation.NewError(validation.Forbidden, forbiddenAccess))
 			},
 		},
 	}
@@ -412,6 +416,48 @@ func TestUpdateArticle(t *testing.T) {
 			assert.Equal(t, c.expected.UserID, article.UserID)
 			assert.NotEmpty(t, article.CreatedAt)
 			assert.NotEmpty(t, article.UpdatedAt)
+		})
+	}
+}
+
+func TestDeleteArticle(t *testing.T) {
+	cases := []struct {
+		name              string
+		userID            string
+		articleID         string
+		err               error
+		mockRepoBehaviour func(mockRepo *mocks.ArticleRepository, userID, articleID string)
+	}{
+		{
+			name:      "should return nil when successfully delete user's article",
+			userID:    test.TestArticle.UserID,
+			articleID: test.TestArticle.ID,
+			err:       nil,
+			mockRepoBehaviour: func(mockRepo *mocks.ArticleRepository, userID, articleID string) {
+				mockRepo.On("Delete", context.Background(), userID, articleID).Return(nil)
+			},
+		},
+		{
+			name:      "should return err when fail to delete user's article",
+			userID:    test.TestArticle.UserID,
+			articleID: test.TestArticle.ID,
+			err:       validation.NewError(validation.BadRequest, "fail to delete article"),
+			mockRepoBehaviour: func(mockRepo *mocks.ArticleRepository, userID, articleID string) {
+				mockRepo.On("Delete", context.Background(), userID, articleID).Return(
+					validation.NewError(validation.BadRequest, "fail to delete article"),
+				)
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			r := new(mocks.ArticleRepository)
+			c.mockRepoBehaviour(r, c.userID, c.articleID)
+
+			s := NewService(logger.NewLogger(), scrapper.NewScrapper(), sanitizer.NewSanitizer(), r)
+			err := s.DeleteArticle(context.Background(), c.userID, c.articleID)
+			assert.Equal(t, c.err, err)
 		})
 	}
 }

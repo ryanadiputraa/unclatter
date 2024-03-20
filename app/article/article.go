@@ -49,6 +49,7 @@ type ArticleService interface {
 	ListBookmarkedArticles(ctx context.Context, userID string, page pagination.Pagination) ([]*Article, *pagination.Meta, error)
 	GetBookmarkedArticle(ctx context.Context, userID, articleID string) (*Article, error)
 	UpdateArticle(ctx context.Context, userID, articleID string, arg BookmarkPayload) (*Article, error)
+	DeleteArticle(ctx context.Context, userID, articleID string) error
 }
 
 type ArticleRepository interface {

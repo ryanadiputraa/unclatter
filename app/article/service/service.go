@@ -108,3 +108,12 @@ func (s *service) UpdateArticle(ctx context.Context, userID, articleID string, a
 	}
 	return
 }
+
+func (s *service) DeleteArticle(ctx context.Context, userID, articleID string) error {
+	if err := s.repository.Delete(ctx, userID, articleID); err != nil {
+		s.log.Error("article service: fail to delete article", err)
+		return err
+	}
+
+	return nil
+}
