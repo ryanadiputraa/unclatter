@@ -30,6 +30,7 @@ func NewHandler(web *http.ServeMux, rw _http.ResponseWriter, articleService arti
 	web.Handle("GET /api/articles/bookmarks", authMiddleware.ParseJWTToken(h.ListBookmarkedArticles()))
 	web.Handle("GET /api/articles/bookmarks/{id}", authMiddleware.ParseJWTToken(h.GetBookmarkedArticle()))
 	web.Handle("PUT /api/articles/bookmarks/{id}", authMiddleware.ParseJWTToken(h.UpdateArticle()))
+	web.Handle("DELETE /api/articles/bookmarks/{id}", authMiddleware.ParseJWTToken(h.DeleteArticle()))
 }
 
 func (h *handler) ScrapeContent() http.HandlerFunc {
@@ -144,5 +145,24 @@ func (h *handler) UpdateArticle() http.HandlerFunc {
 		}
 
 		h.rw.WriteResponseData(w, http.StatusOK, article)
+	}
+}
+
+func (h *handler) DeleteArticle() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ac := r.Context().(*middleware.AuthContext)
+		id := r.PathValue("id")
+
+		err := h.articleService.DeleteArticle(ac, ac.UserID, id)
+		if err != nil {
+			if vErr, ok := err.(*validation.Error); ok {
+				h.rw.WriteErrMessage(w, validation.HttpErrMap[vErr.Err], vErr.Message)
+				return
+			}
+			h.rw.WriteErrMessage(w, http.StatusInternalServerError, "internal server error")
+			return
+		}
+
+		h.rw.WriteResponseData(w, http.StatusOK, nil)
 	}
 }
