@@ -351,3 +351,67 @@ func TestUpdate(t *testing.T) {
 		})
 	}
 }
+
+func TestDelete(t *testing.T) {
+	gormDB, db, mock := test.NewMockDB(t)
+	defer db.Close()
+
+	r := NewRepository(gormDB)
+	deleteQuery := "^DELETE FROM \"articles\" WHERE"
+
+	cases := []struct {
+		name          string
+		mockBehaviour func(mock sqlmock.Sqlmock, userID, articleID string)
+		userID        string
+		articleID     string
+		err           error
+	}{
+		{
+			name: "should successfully delete article record",
+			mockBehaviour: func(mock sqlmock.Sqlmock, userID, articleID string) {
+				mock.ExpectBegin()
+				mock.ExpectExec(deleteQuery).
+					WithArgs(articleID, userID).
+					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.ExpectCommit()
+			},
+			userID:    test.TestArticle.UserID,
+			articleID: test.TestArticle.ID,
+			err:       nil,
+		},
+		{
+			name: "should return err whene delete other user's article record",
+			mockBehaviour: func(mock sqlmock.Sqlmock, userID, articleID string) {
+				mock.ExpectBegin()
+				mock.ExpectExec(deleteQuery).
+					WithArgs(articleID, userID).
+					WillReturnResult(sqlmock.NewResult(0, 0))
+				mock.ExpectCommit()
+			},
+			userID:    test.TestArticle2.UserID,
+			articleID: test.TestArticle.ID,
+			err:       validation.NewError(validation.BadRequest, "fail to delete article"),
+		},
+		{
+			name: "should return err when fail to delete article record",
+			mockBehaviour: func(mock sqlmock.Sqlmock, userID, articleID string) {
+				mock.ExpectBegin()
+				mock.ExpectExec(deleteQuery).
+					WithArgs(articleID, userID).
+					WillReturnError(gorm.ErrInvalidDB)
+				mock.ExpectRollback()
+			},
+			userID:    test.TestArticle2.UserID,
+			articleID: test.TestArticle.ID,
+			err:       gorm.ErrInvalidDB,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			c.mockBehaviour(mock, c.userID, c.articleID)
+			err := r.Delete(context.Background(), c.userID, c.articleID)
+			assert.Equal(t, c.err, err)
+		})
+	}
+}
