@@ -34,8 +34,8 @@ jobs:
           REPOSITORY: unclatter
           IMAGE_TAG: ${{ steps.git-tag.outputs.TAG }}
 
-          SERVER_PORT: 8080
-          SERVER_FE_URL: http://localhost:3000
+          PORT: 8080
+          FE_URL: http://localhost:3000
           POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
           POSTGRES_PORT: 5432
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
@@ -49,8 +49,8 @@ jobs:
 
         run: |
           docker build \
-            --build-arg SERVER_PORT=$SERVER_PORT \
-            --build-arg SERVER_FE_URL=$SERVER_FE_URL \
+            --build-arg PORT=$PORT \
+            --build-arg FE_URL=$FE_URL \
             --build-arg POSTGRES_HOST=$POSTGRES_HOST \
             --build-arg POSTGRES_PORT=$POSTGRES_PORT \
             --build-arg POSTGRES_USER=$POSTGRES_USER \
