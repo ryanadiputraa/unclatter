@@ -36,7 +36,7 @@ jobs:
           REPOSITORY: unclatter
           IMAGE_TAG: ${{ env.TAG }}
 
-          PORT: 8080
+          PORT: 80
           FE_URL: http://localhost:3000
           POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
           POSTGRES_PORT: 5432

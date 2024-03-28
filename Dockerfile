@@ -31,6 +31,6 @@ RUN sh config/config.sh ${PORT} ${FE_URL} ${POSTGRES_HOST} ${POSTGRES_PORT} ${PO
 # Build
 RUN CGO_ENABLED=0 GOOS=linux go build -o unclatter cmd/api/main.go
 
-EXPOSE 8080
+EXPOSE 80
 
 CMD ["./unclatter"]
