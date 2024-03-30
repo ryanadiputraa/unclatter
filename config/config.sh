@@ -12,9 +12,9 @@ postgres_db="$7"
 jwt_secret="$8"
 
 google_redirect_url="$9"
-google_client_id="$10"
-google_client_secret="$11"
-google_state="$12"
+google_client_id="${10}"
+google_client_secret="${11}"
+google_state="${12}"
 
 
 # Define the YAML content with placeholders replaced by command line arguments
