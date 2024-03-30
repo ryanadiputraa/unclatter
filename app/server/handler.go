@@ -1,6 +1,8 @@
 package server
 
 import (
+	"net/http"
+
 	articleHandler "github.com/ryanadiputraa/unclatter/app/article/handler"
 	_articleRepository "github.com/ryanadiputraa/unclatter/app/article/repository"
 	_articleService "github.com/ryanadiputraa/unclatter/app/article/service"
@@ -40,4 +42,8 @@ func (s *Server) setupHandlers() {
 	articleRepository := _articleRepository.NewRepository(s.db)
 	articleService := _articleService.NewService(s.log, scrapper, sanitizer, articleRepository)
 	articleHandler.NewHandler(s.web, rw, articleService, *authMiddleware, validator)
+
+	s.web.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+		rw.WriteResponseData(w, 200, "ok")
+	})
 }
