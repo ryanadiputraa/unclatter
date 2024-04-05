@@ -12,7 +12,7 @@ type Config struct {
 }
 
 type Server struct {
-	Port        string `mapstructure:"port"`
+	Port        int    `mapstructure:"port"`
 	FrontendURL string `mapstructure:"fe_url"`
 }
 
