@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -34,7 +35,7 @@ func (s *Server) ServeHTTP() error {
 	handler := middleware.CORSMiddleware(s.web)
 
 	server := &http.Server{
-		Addr:         s.config.Server.Port,
+		Addr:         fmt.Sprintf(":%v", s.config.Server.Port),
 		Handler:      handler,
 		ReadTimeout:  time.Second * 30,
 		WriteTimeout: time.Second * 30,

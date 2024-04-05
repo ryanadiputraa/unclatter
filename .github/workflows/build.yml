@@ -30,7 +30,7 @@ jobs:
           REPOSITORY: unclatter
           IMAGE_TAG: latest
 
-          PORT: :80
+          PORT: 80
           FE_URL: https://unclatter.devzy.my.id
           POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
           POSTGRES_PORT: 5432
