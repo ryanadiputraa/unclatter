@@ -1,4 +1,4 @@
-name: Build and Push Docker image to AWS ECR
+name: Build and Deploy to Railway App
 
 on:
   push:
@@ -42,6 +42,14 @@ jobs:
             --build-arg GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET \
             --build-arg GOOGLE_STATE=$GOOGLE_STATE \
             -t ryanadiputra/unclatter:latest .
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Railway
+        run: npm i -g @railway/cli
 
       - name: Deploy
         run: railway up
