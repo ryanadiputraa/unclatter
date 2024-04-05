@@ -2,34 +2,18 @@ name: Build and Push Docker image to AWS ECR
 
 on:
   push:
-    tags:
-      - '*'
+    branches: [deploy/railway]
 
 jobs:
   build-and-push:
-    name: Build and push to ECR
+    name: Build and deploy to Railway app
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-southeast-1
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build, tag, and push docker image to Amazon ECR
+      - name: Build and tag image
         env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: unclatter
-          IMAGE_TAG: latest
-
           PORT: :80
           FE_URL: https://unclatter.devzy.my.id
           POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
@@ -57,5 +41,9 @@ jobs:
             --build-arg GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID \
             --build-arg GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET \
             --build-arg GOOGLE_STATE=$GOOGLE_STATE \
-            -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+            -t ryanadiputra/unclatter:latest .
+
+      - name: Deploy
+        run: railway up
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
