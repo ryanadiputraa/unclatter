@@ -10,6 +10,7 @@ import (
 
 	"github.com/ryanadiputraa/unclatter/app/middleware"
 	"github.com/ryanadiputraa/unclatter/config"
+	_http "github.com/ryanadiputraa/unclatter/pkg/http"
 	"github.com/ryanadiputraa/unclatter/pkg/logger"
 	"gorm.io/gorm"
 )
@@ -19,6 +20,7 @@ type Server struct {
 	log    logger.Logger
 	web    *http.ServeMux
 	db     *gorm.DB
+	rw     _http.ResponseWriter
 }
 
 func NewHTTPServer(config *config.Config, log logger.Logger, db *gorm.DB) *Server {
@@ -27,12 +29,14 @@ func NewHTTPServer(config *config.Config, log logger.Logger, db *gorm.DB) *Serve
 		log:    log,
 		web:    http.NewServeMux(),
 		db:     db,
+		rw:     _http.NewResponseWriter(),
 	}
 }
 
 func (s *Server) ServeHTTP() error {
 	s.setupHandlers()
 	handler := middleware.CORSMiddleware(s.web)
+	handler = middleware.ThrottleMiddleware(handler, s.rw)
 
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%v", s.config.Server.Port),

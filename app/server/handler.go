@@ -13,7 +13,6 @@ import (
 	userHandler "github.com/ryanadiputraa/unclatter/app/user/handler"
 	_userRepository "github.com/ryanadiputraa/unclatter/app/user/repository"
 	_userService "github.com/ryanadiputraa/unclatter/app/user/service"
-	_http "github.com/ryanadiputraa/unclatter/pkg/http"
 	"github.com/ryanadiputraa/unclatter/pkg/jwt"
 	"github.com/ryanadiputraa/unclatter/pkg/oauth"
 	"github.com/ryanadiputraa/unclatter/pkg/sanitizer"
@@ -22,18 +21,17 @@ import (
 )
 
 func (s *Server) setupHandlers() {
-	rw := _http.NewResponseWriter()
 	validator := validator.NewValidator()
 	googleOauth := oauth.NewGoogleOauth(s.config.GoogleOauth)
 	jwtTokens := jwt.NewJWTTokens(s.config.JWT)
 	scrapper := scrapper.NewScrapper()
 	sanitizer := sanitizer.NewSanitizer()
 
-	authMiddleware := middleware.NewAuthMiddleware(s.log, s.config.JWT, rw, jwtTokens)
+	authMiddleware := middleware.NewAuthMiddleware(s.log, s.config.JWT, s.rw, jwtTokens)
 
 	userRepository := _userRepository.NewRepository(s.db)
 	userService := _userService.NewService(s.log, userRepository)
-	userHandler.NewUserHandler(s.web, rw, userService, *authMiddleware)
+	userHandler.NewUserHandler(s.web, s.rw, userService, *authMiddleware)
 
 	authRepository := _authRepository.NewRepository(s.db)
 	authService := _authService.NewService(s.log, authRepository)
@@ -41,9 +39,9 @@ func (s *Server) setupHandlers() {
 
 	articleRepository := _articleRepository.NewRepository(s.db)
 	articleService := _articleService.NewService(s.log, scrapper, sanitizer, articleRepository)
-	articleHandler.NewHandler(s.web, rw, articleService, *authMiddleware, validator)
+	articleHandler.NewHandler(s.web, s.rw, articleService, *authMiddleware, validator)
 
 	s.web.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
-		rw.WriteResponseData(w, 200, "ok")
+		s.rw.WriteResponseData(w, 200, "ok")
 	})
 }
