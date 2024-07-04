@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/ryanadiputraa/unclatter/app/middleware"
@@ -52,9 +53,8 @@ func (s *Server) ServeHTTP() error {
 		}
 	}()
 
-	quit := make(chan os.Signal)
-	signal.Notify(quit, os.Interrupt)
-	signal.Notify(quit, os.Kill)
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	sig := <-quit
 	s.log.Info("received terminate, graceful shutdown", sig)
